@@ -11,8 +11,8 @@ class API_LIB{
         let reader = new Reader(path_openapi)
         reader.read_openapi().then(()=>{
             let creator = new Creator(port, path_project, reader)//створення mock-сервісу відбувається в останню чергу
-            creator.create_mockservice()
-            creator.run()
+            creator.create()
+            creator.run("test_001")
         })
     }
 

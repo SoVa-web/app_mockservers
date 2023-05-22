@@ -1,24 +1,28 @@
 import { writeFile } from "node:fs/promises"
-import { exec } from 'child_process';
+import { exec, ChildProcess} from 'child_process';
 import Reader from "./reader_openapi";
 
+export interface Object_RunningMockservice{
+    name: string
+    child_mockservice: ChildProcess
+}
 
 class Creator{
     path_project:string
     port:number
     path_file_script: string;
-    methods_script:string
+    methods_script:string = ``
     reader:Reader
+    arr_child_process:Array<Object_RunningMockservice> = []
 
     constructor(port:number, path_project:string, reader:Reader){
         this.path_project = path_project
         this.port = port
         this.path_file_script = `${this.path_project}mockservice_port_${this.port}.ts`
-        this.methods_script = ``
         this.reader = reader
     }
 
-    public create_mockservice(){
+    public create(){
         let imports = `
         import express from 'express'
         import reader from './reader_openapi'
@@ -30,20 +34,29 @@ class Creator{
         let log = new Logging("${this.path_project}mockservice_port_${this.port}_log.log")
         `
 
-        let script_mockservice:string = imports + app + this.add_method("get", "/" ) + this.start_mockservice(this.port)
+        let script_mockservice:string = imports + app + this.add_method("get", "/" ) + this.add_script_start(this.port)
         writeFile(this.path_file_script, script_mockservice)
     }
 
-    run():void{
-        exec(`node --loader ts-node/esm ${this.path_file_script}`);
+    run(name_mockservice:string):void{
+        let child_server = exec(`node --loader ts-node/esm ${this.path_file_script}`);
+
+        child_server.on('exit',(status)=>{
+            console.log(`Процес завершився з кодом виходу: ${status}`);
+        })
+
+        this.arr_child_process.push({
+            name: name_mockservice,
+            child_mockservice: child_server
+        })
     }
 
-    stop_mockservice():void{
-
-    }
-
-    delete_mockservice():void{
-
+    stop(name_mockservice:string):void{ //new ver
+        this.arr_child_process.forEach(item => {
+            if(item.name = name_mockservice){
+                item.child_mockservice.kill()
+            }
+        })
     }
 
     add_methods(endpoint_list:Array<any>):void{
@@ -85,7 +98,7 @@ class Creator{
         return temp
     }
 
-    start_mockservice(port:number):string{
+    add_script_start(port:number):string{
         let start = `app.listen(${port}, () => {\n\t\tconsole.log("Server is starting on ${port}")\n\t})`
         return start
     }
