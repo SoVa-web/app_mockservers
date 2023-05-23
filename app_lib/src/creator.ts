@@ -62,7 +62,7 @@ class Creator{
     add_methods(endpoint_list:Array<any>):void{
         let parameters:Array<object> = []
         endpoint_list.forEach(endpoint_method => {
-            parameters = this.reader.exist_field_parameters(endpoint_method.method, endpoint_method.endpoint)
+            parameters = this.reader.parsing_parameters(endpoint_method.method, endpoint_method.endpoint)
             if(parameters.length === 0){
                 this.methods_script += this.add_method(endpoint_method.method, endpoint_method.endpoint)
             }else{

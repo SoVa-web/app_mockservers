@@ -18,7 +18,8 @@
     "paths": {
           "express": ["node_modules/express"],
           "reader_openapi": ["reader_openapi"],
-          "logging":["logging"]
+          "logging":["logging"],
+          "converter":["converter"]
         },
     "outDir": "./dist"
   },
