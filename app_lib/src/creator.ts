@@ -80,18 +80,19 @@ class Creator{
             case "post":
                 break;
             default:
+                break;
         }
         return script
     }
 
-    add_method_get(endpoint: string, parameters:object|null):string {
-        let data:object = {}
+    add_method_get(endpoint: string, parameters:Array<object>|null):string {
+        let data:object = {}//there will be mock-data from exsamples OpenAPI
         let temp:string = ``
 
         if (parameters != null){
 
         }else{
-            data = {test: "Наче працює"} //there will be mock-data from exsamples OpenAPI
+            data = {test: "Наче працює"} 
             temp = `app.get('${endpoint}', (req, res) => {\n\t\tres.send(${JSON.stringify(data)});\n\t});\n\n`
         }
         
