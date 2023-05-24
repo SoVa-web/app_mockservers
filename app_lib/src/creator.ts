@@ -91,7 +91,7 @@ class Creator{
         if (parameters != null){
 
         }else{
-            data = {test: "Наче працює"} //сюди витягуємо дані з мок-даних
+            data = {test: "Наче працює"} //there will be mock-data from exsamples OpenAPI
             temp = `app.get('${endpoint}', (req, res) => {\n\t\tres.send(${JSON.stringify(data)});\n\t});\n\n`
         }
         

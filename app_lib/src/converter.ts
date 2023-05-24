@@ -7,9 +7,9 @@ class Converter{
         }
       
           function get_data_component(ref: string): any {
-            const refParts = ref.replace('#/', '').split('/');
-            const component_name = refParts[refParts.length - 1];//get name component
-            const sec_name = refParts[refParts.length - 2]
+            const reference = ref.replace('#/', '').split('/');
+            const component_name = reference[reference.length - 1];//get name component
+            const sec_name = reference[reference.length - 2]
             return data.components[sec_name][component_name];
           }
       

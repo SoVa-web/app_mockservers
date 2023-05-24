@@ -3,6 +3,7 @@
 import OpenAPIV3 from 'openapi-types';
 import SwaggerParser from '@apidevtools/swagger-parser'
 import converter from './converter.ts';
+import { writeFile } from 'fs/promises'; 
 
 class ReadWriter{
     public yaml_content: any;
@@ -14,9 +15,7 @@ class ReadWriter{
 
     async read_openapi():Promise<void>{
         this.yaml_content = await SwaggerParser.parse(this.path_openapi)
-        console.log(this.yaml_content.paths["/no_auth/pets"].post)
         converter.convert_without_components(this.yaml_content)
-        console.log(this.yaml_content.paths["/no_auth/pets"].post.requestBody.content['application/json'].schema.properties)
     }
 
     parsing_endpoints():Array<object>{
@@ -34,30 +33,15 @@ export interface IReader{
 }
 
 let reader: IReader = {
-    /*
-    example: 
-    endpoints = [
-        {
-            endpoint: "/",
-            method: "get"
-        },
-        {
-            endpoint: "/pizza",
-            method: "get"
-        },
-        ...
-    ]
-    */
-    //парсинг енпоінтів та методів
-    //перед викликом перевіряти data на undefined
-    //new ver
     get_endpoints: function(data:OpenAPIV3.OpenAPI.Document<{}>):Array<object>{
+        let obj:any = data
         let arr:Array<any> = []
-        for(let i in data.paths){
-            for(let j in data.paths[i]){
+        for(let i in obj.paths){
+            for(let j in obj.paths[i]){
                 arr.push({
                     endpoint: i,
-                    method: j
+                    method: j,
+                    responses: obj.paths[i][j].responses
                 })
             }
         }
@@ -65,69 +49,39 @@ let reader: IReader = {
         return arr
     },
 
-    /*
-        [
-            {
-                name: "id",
-                in: "path/query/header"
-                type:
-            },
-            {
-                ...
-            }
-        ]
-    */
-
-    get_parameters:function(method_req: string, endpoint: string, data:OpenAPIV3.OpenAPI.Document<{}>):Array<object>{
+    get_parameters:function(method_req: string, endpoint: string, data:any):Array<object>{
         let arr_parameters:Array<object> = []
         let paths = data.paths 
         if(paths){
             let endp = paths[endpoint]
             if(endp){
-                if(endp?.parameters){
-                    //перевіряємо параметри на рівні шляху
+                let endpoint_param:Array<any> = endp.parameters
+                if(endpoint_param != undefined){
+                    endpoint_param.forEach((el)=>{
+                        arr_parameters.push({
+                            name: el.name,
+                            in: el.in
+                        })
+                    })
                 }
 
-                let method:any
-                switch (method_req){
-                    case "get":
-                        method = endp.get
-                        break;
-                    case "post":
-                        method = endp.post
-                        break;
-                    case "put":
-                        method = endp.put
-                        break;
-                    case "delete":
-                        method = endp.delete
-                        break;
-                    case "patch":
-                        method = endp.patch
-                        break;
-                    default:
-                        method = undefined
-                        break;
-                }    
-
+                let method = endp[method_req]
                 if(method && method.parameters){
-                    //перевіряємо параметри на рівні методу
+                    let arr:Array<any> = method.parameters
+                    if(arr != undefined){
+                        arr.forEach((el)=>{
+                            arr_parameters.push({
+                                name: el.name,
+                                in: el.in
+                            })
+                        })
+                    }
+    
                 }
-                
-                
             }
         }
         return arr_parameters
     }
-
-    /* 
-    1. Метод парсингу параметрів з урахуванням components
-    2. Метод повернення відповіді з урахуванням components
-    3. Метод валідації тіла запиту методу post відповідно до файлу свагера
-    4. Метод створення нового ресурсу методом post
-    5. Підв'язати це все до  Creator
-    6. Підв'язати простеньку GUI
-    */
 
 
 }
