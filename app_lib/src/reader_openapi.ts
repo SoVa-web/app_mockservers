@@ -6,7 +6,7 @@ import converter from './converter.ts';
 import { writeFile } from 'fs/promises'; 
 
 class ReadWriter{
-    public yaml_content: any;
+    public yaml_content: OpenAPIV3.OpenAPI.Document<{}>|undefined = undefined;
     public path_openapi: string
 
     constructor(path: string){   
@@ -19,11 +19,17 @@ class ReadWriter{
     }
 
     parsing_endpoints():Array<object>{
-        return  reader.get_endpoints(this.yaml_content)
+        let buf = reader.get_endpoints(this.yaml_content)
+        //console.log(buf)
+        return  buf
     }
 
     parsing_parameters(method_req: string, endpoint: string):Array<object> {
         return reader.get_parameters(method_req, endpoint, this.yaml_content)
+    }
+
+    parsing_res_get(endpoint:string, status:string):any{
+        return reader.get_mockdata_get(endpoint, status, this.yaml_content)
     }
 }
 
@@ -39,10 +45,14 @@ let reader: IReader = {
         let arr: Array<any> = [];
         for (let i in obj.paths) {
             for (let j in obj.paths[i]) {
+                let res = []
+                for(let status in obj.paths[i][j].responses){
+                    res.push(status)
+                }
                 arr.push({
                     endpoint: i,
                     method: j,
-                    responses: obj.paths[i][j].responses
+                    responses: res
                 });
             }
         }

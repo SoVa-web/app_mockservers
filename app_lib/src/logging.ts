@@ -1,3 +1,7 @@
+//import {writeFile, readFile} from 'node:fs/promises'
+import { error } from 'console'
+import * as fs from 'fs'
+
 class Logging{
     path_log:string
 
@@ -5,24 +9,28 @@ class Logging{
         this.path_log = path_log
     }
 
-    create_log():void{
-
-    }
-
     add_log_request():void{
+        fs.writeFile(this.path_log, "", (error)=>{
 
+        })
     }
 
     add_log_response():void{
+        fs.writeFile(this.path_log, "", (error)=>{
 
+        })
     }
 
-    add_log_error():void{
-        
-    }
-
-    show_log():void{
-
+    show_log():string{
+        fs.readFile(this.path_log, 'utf-8', (error, content)=>{
+            if (error) {
+                console.error(`Помилка читання файлу ${this.path_log}`, error);
+              } else {
+                console.log("Успішно прочитано");
+                return content
+              }
+        })
+        return "Помилка читання"
     }
 }
 

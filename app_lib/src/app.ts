@@ -3,32 +3,44 @@ import ReadWriter from './reader_openapi.ts'
 import Logging from "./logging"
 
 let port = 5500||80
-let path_openapi = "./test_data_openapi3.yaml"
-let path_project = `../data/`
-
-let reader = new ReadWriter(path_openapi)
-reader.read_openapi().then(()=>{
-    console.log(reader.parsing_endpoints())
-})
+let path_openapi = "./testopenapi3_1.yaml"
+let name_project = "test_001"
+let timeout = 0
 
 class API_LIB{
-    create(port:number, path_openapi:string, path_project:string, delay:number):void{
-        let reader = new ReadWriter(path_openapi)
+    creator: Creator|undefined = undefined
+    port: number
+    path_openapi: string
+    name_project: string
+    delay: number
+
+    constructor(port:number, path_openapi:string, name_project:string, delay:number){
+        this.port = port
+        this.path_openapi = path_openapi
+        this.name_project = name_project
+        this.delay = delay
+    }
+
+
+    create():void{
+        let reader = new ReadWriter(this.path_openapi)
         reader.read_openapi().then(()=>{
-            let creator = new Creator(port, path_project, reader)//створення mock-сервісу відбувається в останню чергу
-            creator.create()
-            creator.run("test_001")
+            this.creator = new Creator(this.port, this.name_project, this.delay, reader)//створення mock-сервісу відбувається в останню чергу
+            this.creator.create()
         })
     }
 
-    run(port:number, path_openapi:string, path_project:string, delay:number):void{
-        let reader = new ReadWriter(path_openapi)
+    run():void{
+        if(this.creator) this.creator.run()
     }
 
     show_log():string{
         return ""
     }
 }
+
+let api = new API_LIB(port, path_openapi, name_project, timeout)
+api.create()
 
 export default API_LIB
 

@@ -8,37 +8,34 @@ export interface Object_RunningMockservice{
 }
 
 class Creator{
-    path_project:string
+    name_project:string
     port:number
     path_file_script: string;
+    timeout:number;
     methods_script:string = ``
     reader:Reader
     arr_child_process:Array<Object_RunningMockservice> = []
 
-    constructor(port:number, path_project:string, reader:Reader){
-        this.path_project = path_project
+    constructor(port:number, name_project:string, timeout:number, reader:Reader){
+        this.name_project = name_project
         this.port = port
-        this.path_file_script = `${this.path_project}mockservice_port_${this.port}.ts`
+        this.path_file_script = `../data/${this.name_project}_port_${this.port}.ts`
         this.reader = reader
+        this.timeout = timeout
     }
 
     public create(){
-        let imports = `
-        import express from 'express'
-        import reader from './reader_openapi'
-        import Logging from './logging'
-        `
+        let imports = `import express from 'express'\nimport reader from '../src/reader_openapi'\nimport Logging from '../src/logging'\n`
 
-        let app = `
-        const app = express()
-        let log = new Logging("${this.path_project}mockservice_port_${this.port}_log.log")
-        `
-
-        let script_mockservice:string = imports + app + this.add_method("get", "/" ) + this.add_script_start(this.port)
+        let app = `const app = express()\nlet log = new Logging("../log/${this.name_project}_port_${this.port}_log.log")\n`
+        let endpoint_list = this.reader.parsing_endpoints()
+        this.add_methods(endpoint_list)
+        //console.log(endpoint_list)
+        let script_mockservice:string = imports + app + this.methods_script + this.add_script_start(this.port)
         writeFile(this.path_file_script, script_mockservice)
     }
 
-    run(name_mockservice:string):void{
+    run():void{
         let child_server = exec(`node --loader ts-node/esm ${this.path_file_script}`);
 
         child_server.on('exit',(status)=>{
@@ -46,7 +43,7 @@ class Creator{
         })
 
         this.arr_child_process.push({
-            name: name_mockservice,
+            name: this.name_project,
             child_mockservice: child_server
         })
     }
@@ -64,36 +61,46 @@ class Creator{
         endpoint_list.forEach(endpoint_method => {
             parameters = this.reader.parsing_parameters(endpoint_method.method, endpoint_method.endpoint)
             if(parameters.length === 0){
-                this.methods_script += this.add_method(endpoint_method.method, endpoint_method.endpoint)
+                this.methods_script += this.add_method(endpoint_method.method, endpoint_method.endpoint, endpoint_method.responses)
             }else{
-                this.methods_script += this.add_method(endpoint_method.method, endpoint_method.endpoint, parameters)
+                this.methods_script += this.add_method(endpoint_method.method, endpoint_method.endpoint, endpoint_method.responses, parameters)
             }
+            console.log(this.methods_script)
         })
     }
 
-    add_method(method_req:string, endpoint:string, parameters:Array<object>|null = null):string{
+    add_method(method_req:string, endpoint:string, status:Array<string>, parameters:Array<object>|null = null):string{
         let script = ``
         switch(method_req){
             case "get":
-                script = this.add_method_get(endpoint, parameters)
+                console.log(status)
+                script = this.add_method_get(endpoint, status, parameters)
                 break;
             case "post":
                 break;
             default:
                 break;
         }
+        //console.log(script)
         return script
     }
 
-    add_method_get(endpoint: string, parameters:Array<object>|null):string {
-        let data:object = {}//there will be mock-data from exsamples OpenAPI
+    add_method_get(endpoint: string, status:Array<string>, parameters:Array<object>|null):string {
+        let data:object = {}// there will be mock-data from exsamples OpenAPI
         let temp:string = ``
 
         if (parameters != null){
-
+            let body = ``
+            temp = `app.get('${endpoint}', (req, res) => {\n\t\t${body}\n\t});\n\n`
         }else{
-            data = {test: "Наче працює"} 
-            temp = `app.get('${endpoint}', (req, res) => {\n\t\tres.send(${JSON.stringify(data)});\n\t});\n\n`
+            console.log(status)
+            data = this.reader.parsing_res_get(endpoint, random_status(status))
+            temp = `app.get('${endpoint}', (req, res) => {\n\t\tsetTimeout(()=>{res.send(${JSON.stringify(data)})},${this.timeout});\n\t});\n\n`
+        }
+
+        function random_status(status_res:Array<string>):string{
+            console.log(status_res)
+            return status_res[(Math.floor(Math.random() * status_res.length))]
         }
         
         return temp
