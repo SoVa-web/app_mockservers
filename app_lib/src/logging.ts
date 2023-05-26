@@ -2,7 +2,7 @@
 import { error } from 'console'
 import * as fs from 'fs'
 
-class Logging{
+export class Logging{
     path_log:string
 
     constructor(path_log:string){
@@ -26,7 +26,6 @@ class Logging{
             if (error) {
                 console.error(`Помилка читання файлу ${this.path_log}`, error);
               } else {
-                console.log("Успішно прочитано");
                 return content
               }
         })

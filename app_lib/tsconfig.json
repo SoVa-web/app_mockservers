@@ -19,7 +19,8 @@
           "express": ["node_modules/express"],
           "reader_openapi": ["reader_openapi"],
           "logging":["logging"],
-          "converter":["converter"]
+          "converter":["converter"],
+          "filter":["filter"]
         },
     "outDir": "./dist"
   },

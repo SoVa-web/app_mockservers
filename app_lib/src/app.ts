@@ -7,7 +7,7 @@ let path_openapi = "./testopenapi3_1.yaml"
 let name_project = "test_001"
 let timeout = 0
 
-class API_LIB{
+export class API_LIB{
     creator: Creator|undefined = undefined
     port: number
     path_openapi: string

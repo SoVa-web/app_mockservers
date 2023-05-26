@@ -1,4 +1,4 @@
-class Converter{ 
+export class Converter{ 
     convert_without_components(data: any): void{
         if(data.components){
             rec(data)
@@ -7,9 +7,9 @@ class Converter{
         }
       
           function get_data_component(ref: string): any {
-            const reference = ref.replace('#/', '').split('/');
-            const component_name = reference[reference.length - 1];//get name component
-            const sec_name = reference[reference.length - 2]
+            let reference = ref.replace('#/', '').split('/');
+            let component_name = reference[reference.length - 1];//get name component
+            let sec_name = reference[reference.length - 2]
             return data.components[sec_name][component_name];
           }
       

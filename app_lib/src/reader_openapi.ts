@@ -5,7 +5,7 @@ import SwaggerParser from '@apidevtools/swagger-parser'
 import converter from './converter.ts';
 import { writeFile } from 'fs/promises'; 
 
-class ReadWriter{
+export class ReadWriter{
     public yaml_content: OpenAPIV3.OpenAPI.Document<{}>|undefined = undefined;
     public path_openapi: string
 

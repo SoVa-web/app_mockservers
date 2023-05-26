@@ -2,12 +2,12 @@ import { writeFile } from "node:fs/promises"
 import { exec, ChildProcess} from 'child_process';
 import Reader from "./reader_openapi";
 
-export interface Object_RunningMockservice{
+interface Object_RunningMockservice{
     name: string
     child_mockservice: ChildProcess
 }
 
-class Creator{
+export class Creator{
     name_project:string
     port:number
     path_file_script: string;
@@ -25,9 +25,9 @@ class Creator{
     }
 
     public create(){
-        let imports = `import express from 'express'\nimport reader from '../src/reader_openapi'\nimport Logging from '../src/logging'\n`
+        let imports = `import express from 'express'\nimport Logging from '../src/logging'\nimport filter from '../src/filter'\n\n`
 
-        let app = `const app = express()\nlet log = new Logging("../log/${this.name_project}_port_${this.port}_log.log")\n`
+        let app = `const app = express()\nlet log = new Logging("../log/${this.name_project}_port_${this.port}_log.log")\n\n`
         let endpoint_list = this.reader.parsing_endpoints()
         this.add_methods(endpoint_list)
         //console.log(endpoint_list)
@@ -88,19 +88,35 @@ class Creator{
     add_method_get(endpoint: string, status:Array<string>, parameters:Array<object>|null):string {
         let data:object = {}// there will be mock-data from exsamples OpenAPI
         let temp:string = ``
+        let param:Array<any>|null = parameters
 
         if (parameters != null){
             let body = ``
+
+            //читаємо параметри
+            let buffer = ``
+            param?.forEach(item => {
+                buffer += `${item.name}: req.${this.type_param(item.in)}.${item.name},\n`
+            })
+            let obj_param = `let param:object = {${buffer}}\n`
+
+            //дістаємо дані
+            data = this.reader.parsing_res_get(endpoint, "200")
+            let data_str = `let data = ${JSON.stringify(data)}\n`
+
+            //фільтруємо дані, якщо статус 200
+            let filter = `data = filter.filtration(param, data)\n`
+
+            //response
+            let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});`
+
+            body = obj_param + data_str + filter + res
+
             temp = `app.get('${endpoint}', (req, res) => {\n\t\t${body}\n\t});\n\n`
         }else{
             console.log(status)
-            data = this.reader.parsing_res_get(endpoint, random_status(status))
+            data = this.reader.parsing_res_get(endpoint, "200")
             temp = `app.get('${endpoint}', (req, res) => {\n\t\tsetTimeout(()=>{res.send(${JSON.stringify(data)})},${this.timeout});\n\t});\n\n`
-        }
-
-        function random_status(status_res:Array<string>):string{
-            console.log(status_res)
-            return status_res[(Math.floor(Math.random() * status_res.length))]
         }
         
         return temp
@@ -109,6 +125,24 @@ class Creator{
     add_script_start(port:number):string{
         let start = `app.listen(${port}, () => {\n\t\tconsole.log("Server is starting on ${port}")\n\t})`
         return start
+    }
+
+    type_param(str:string):string{
+        switch (str){
+            case "path":
+                return "params"
+            case "query":
+                return "query"
+            case "header":
+                return "headers"
+            default:
+                return "cookies"
+        }
+    }
+
+    random_status(status_res:Array<string>):string{
+        console.log(status_res)
+        return status_res[(Math.floor(Math.random() * status_res.length))]
     }
 }
 
