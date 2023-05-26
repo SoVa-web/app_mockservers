@@ -1,10 +1,10 @@
 import Creator from './creator.ts'
 import ReadWriter from './reader_openapi.ts'
 
-let port = 5500||80
-let path_openapi = "./testopenapi3_1.yaml"
-let name_project = "test_001"
-let timeout = 0
+let port = Number(process.argv[2])
+let path_openapi = process.argv[3]//"./testopenapi3_1.yaml"
+let name_project = process.argv[4]//"test_001"
+let timeout = Number(process.argv[5])
 
 export class API_LIB{
     creator: Creator|undefined = undefined
