@@ -1,5 +1,4 @@
 //import {writeFile, readFile} from 'node:fs/promises'
-import { error } from 'console'
 import * as fs from 'fs'
 
 export class Logging{

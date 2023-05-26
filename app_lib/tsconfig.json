@@ -17,10 +17,7 @@
     "baseUrl": "./",
     "paths": {
           "express": ["node_modules/express"],
-          "reader_openapi": ["reader_openapi"],
-          "logging":["logging"],
-          "converter":["converter"],
-          "filter":["filter"]
+          "*": ["src/*"]
         },
     "outDir": "./dist"
   },

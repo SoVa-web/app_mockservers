@@ -9,7 +9,8 @@
   "scripts": {
     "test": "jest",
     "test:cov": "jest --coverage",
-    "start": "cd src & node --loader ts-node/esm app.ts",
+    "start:creator-mockservice": "cd src & node --loader ts-node/esm app.ts",
+    "start:mockservice": "cd ./data & node --loader ts-node/esm",
     "start:dev": "cd src & nodemon --esm app.ts"
   },
   "keywords": [],

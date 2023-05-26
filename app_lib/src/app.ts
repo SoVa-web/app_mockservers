@@ -1,6 +1,5 @@
 import Creator from './creator.ts'
 import ReadWriter from './reader_openapi.ts'
-import Logging from "./logging"
 
 let port = 5500||80
 let path_openapi = "./testopenapi3_1.yaml"
@@ -27,6 +26,7 @@ export class API_LIB{
         reader.read_openapi().then(()=>{
             this.creator = new Creator(this.port, this.name_project, this.delay, reader)//створення mock-сервісу відбувається в останню чергу
             this.creator.create()
+            console.log("Created mock service by path " +  this.creator.path_file_script)
         })
     }
 

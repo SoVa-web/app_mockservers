@@ -25,7 +25,7 @@ export class Creator{
     }
 
     public create(){
-        let imports = `import express from 'express'\nimport Logging from '../src/logging'\nimport filter from '../src/filter'\n\n`
+        let imports = `import express from 'express'\nimport Logging from '../src/logging.ts'\nimport filter from '../src/filter.ts'\n\n`
 
         let app = `const app = express()\nlet log = new Logging("../log/${this.name_project}_port_${this.port}_log.log")\n\n`
         let endpoint_list = this.reader.parsing_endpoints()
@@ -65,7 +65,7 @@ export class Creator{
             }else{
                 this.methods_script += this.add_method(endpoint_method.method, endpoint_method.endpoint, endpoint_method.responses, parameters)
             }
-            console.log(this.methods_script)
+            //console.log(this.methods_script)
         })
     }
 
@@ -73,7 +73,7 @@ export class Creator{
         let script = ``
         switch(method_req){
             case "get":
-                console.log(status)
+                //console.log(status)
                 script = this.add_method_get(endpoint, status, parameters)
                 break;
             case "post":
@@ -114,7 +114,7 @@ export class Creator{
 
             temp = `app.get('${endpoint}', (req, res) => {\n\t\t${body}\n\t});\n\n`
         }else{
-            console.log(status)
+            //console.log(status)
             data = this.reader.parsing_res_get(endpoint, "200")
             temp = `app.get('${endpoint}', (req, res) => {\n\t\tsetTimeout(()=>{res.send(${JSON.stringify(data)})},${this.timeout});\n\t});\n\n`
         }
@@ -141,7 +141,7 @@ export class Creator{
     }
 
     random_status(status_res:Array<string>):string{
-        console.log(status_res)
+        //console.log(status_res)
         return status_res[(Math.floor(Math.random() * status_res.length))]
     }
 }
