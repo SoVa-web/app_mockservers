@@ -27,7 +27,7 @@ export class Creator{
     public create(){
         let imports = `import express from 'express'\nimport Logging from '../src/logging.ts'\nimport filter from '../src/filter.ts'\n\n`
 
-        let app = `const app = express()\nlet log = new Logging("../log/${this.name_project}_port_${this.port}_log.log")\n\n`
+        let app = `const app = express()\nlet log = new Logging("../log/${this.name_project}_port_${this.port}.log")\n\n`
         let endpoint_list = this.reader.parsing_endpoints()
         this.add_methods(endpoint_list)
         //console.log(endpoint_list)
@@ -89,6 +89,8 @@ export class Creator{
         let data:object = {}// there will be mock-data from exsamples OpenAPI
         let temp:string = ``
         let param:Array<any>|null = parameters
+        let log_req:string = ``
+        let log_res:string = ``
 
         if (parameters != null){
             let body = ``
@@ -110,13 +112,19 @@ export class Creator{
             //response
             let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});`
 
-            body = obj_param + data_str + filter + res
+            //log
+            log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", String(JSON.stringify(param)))\n`
+            log_res = `\n\t\tlog.add_log("Send response GET by ${endpoint}", data)\n`
 
-            temp = `app.get('${endpoint}', (req, res) => {\n\t\t${body}\n\t});\n\n`
+            body = obj_param + log_req + data_str + filter + log_res + res
+
+            temp = `app.get('${endpoint}', (req, res) => {\n\t\tconsole.log("Get request GET on ${endpoint}")\n\t\t${body}\n\t});\n\n`
         }else{
             //console.log(status)
             data = this.reader.parsing_res_get(endpoint, "200")
-            temp = `app.get('${endpoint}', (req, res) => {\n\t\tsetTimeout(()=>{res.send(${JSON.stringify(data)})},${this.timeout});\n\t});\n\n`
+            log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", "Without parameters or parameters is wrong")\n\t\t`
+            log_res = `\n\t\tlog.add_log("Send response GET by ${endpoint}", ${String(JSON.stringify(data))})\n\t\t`
+            temp = `app.get('${endpoint}', (req, res) => {${log_req}\n\t\tconsole.log("Get request GET on ${endpoint}")\n\t\t${log_res}setTimeout(()=>{res.send(${JSON.stringify(data)})},${this.timeout});\n\t});\n\n`
         }
         
         return temp

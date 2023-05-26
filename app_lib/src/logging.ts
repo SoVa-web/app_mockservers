@@ -8,15 +8,14 @@ export class Logging{
         this.path_log = path_log
     }
 
-    add_log_request():void{
-        fs.writeFile(this.path_log, "", (error)=>{
-
-        })
-    }
-
-    add_log_response():void{
-        fs.writeFile(this.path_log, "", (error)=>{
-
+    add_log(data:string, req_res_data:any):void{
+        let date = new Date()
+        let content:string = ""
+        content += data
+        content += JSON.stringify(req_res_data)
+        content += `time: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds} UTC \n`
+        fs.appendFile(this.path_log, content, (error)=>{
+            console.error(`Запис логів події у файл ${this.path_log}`, error);
         })
     }
 
