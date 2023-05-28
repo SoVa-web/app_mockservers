@@ -1,0 +1,130 @@
+openapi: 3.0.0
+info:
+  title: Test API
+  description: Test API using OpenAPI specification
+  version: 0.0.1
+servers:
+  - url: http://localhost:{port}
+    variables:
+      port:
+        enum:
+          - '5000'
+          - '8000'
+        default:
+          '5000'
+paths:
+  /pizza:
+    get:
+      summary: Get a list kind of pizza
+      operationId: listPizza
+      responses:
+        '200':
+          description: A list of pizzas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                    name:
+                      type: string
+                    size:
+                      type: string
+                    price:
+                      type: number
+                    url:
+                      type: string
+              example:
+                - id: 1
+                  name: "Папероні"
+                  size: "середня"
+                  price: 200.0
+                  url: "https://"
+                - id: 2
+                  name: "Гавайська"
+                  size: "велика"
+                  price: 156.0
+                  url: "https://"
+  /pizza/:id:
+    get:
+      summary: Get a pizza by id
+      operationId: getPizzaById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the pizza to get
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A pizza object.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - name
+                  - status_availability
+                  - price
+                  - ingredient
+                properties:
+                  id:
+                    type: number
+                  name:
+                    type: string
+                  status_availability:
+                    type: boolean
+                  price:
+                    type: number
+                  size:
+                    type: string
+                  weight:
+                    type: number
+                  calorie_content:
+                    type: number
+                  ingredient:
+                    type: array
+                    items:
+                      type: string
+                  url:
+                    type: string
+              examples:
+                example1:
+                  value:
+                    id: 1
+                    name: "Папероні"
+                    status_availability: true
+                    price: 200.0
+                    siza: "середня"
+                    weight: 400.0
+                    calorie_content: 167
+                    ingredient: ["салямі", "зелень", "сир Сулугуні"]
+                    url: "https://"
+                example2:
+                  value:
+                    id: 2
+                    name: "Гавайська"
+                    status_availability: true
+                    price: 156.0
+                    siza: "велика"
+                    weight: 400.0
+                    calorie_content: 167
+                    ingredient: ["курка", "зелень", "сир Сулугуні", "ананас"]
+                    url: "https://"
+                    
+        '400':
+          description: Error 400
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                  description:
+                    type: string

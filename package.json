@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@apidevtools/swagger-parser": "^10.1.0",
+    "@types/swagger-schema-official": "^2.0.22",
+    "openapi-types": "^12.1.1"
+  }
+}
