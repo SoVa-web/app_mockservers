@@ -1,5 +1,8 @@
 class Filter{
-    filtration(parameters:object, mock_data:Array<any>):Array<any>{
+    filtration(parameters:object, mock_data:Array<any>|undefined):Array<any>{
+        if(!mock_data || (mock_data && mock_data.length === 0)) 
+            return ["Empty data or OpenAPI not consist descriptin for status '200' for GET in this endpoint"]
+
         let res:Array<any> = []
         let matching:boolean[] = Array(mock_data.length).fill(true);
         let param:any = parameters

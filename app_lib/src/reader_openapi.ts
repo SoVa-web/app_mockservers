@@ -43,14 +43,17 @@ let reader: IReader = {
     get_endpoints: function (data: OpenAPIV3.OpenAPI.Document<{}>): Array<object> {
         let obj: any = data;
         let arr: Array<any> = [];
+        let buffer:string = ""
         for (let i in obj.paths) {
             for (let j in obj.paths[i]) {
                 let res = []
                 for(let status in obj.paths[i][j].responses){
                     res.push(status)
                 }
+                buffer = i.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')
+
                 arr.push({
-                    endpoint: i,
+                    endpoint: buffer,
                     method: j,
                     responses: res
                 });
@@ -98,7 +101,7 @@ let reader: IReader = {
         let res_data:any = undefined
         let obj:any = data
         if(status[0] === '2'){//if status 2xx we return mock-data
-            let buff = obj?.paths[endpoint].get.responses[status].content["application/json"]
+            let buff = obj?.paths[endpoint]?.get?.responses[status]?.content["application/json"]
             if(buff){
                 if(buff.examples){// array
                     res_data = []
@@ -110,6 +113,8 @@ let reader: IReader = {
                     res_data = buff.example 
                 }
                 // situation when examples and example exist in the same time isn`t implemented
+            }else{
+                return res_data
             }
         }else{
             res_data = obj?.paths[endpoint].get.responses[status]

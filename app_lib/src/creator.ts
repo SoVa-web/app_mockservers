@@ -104,7 +104,7 @@ export class Creator{
 
             //дістаємо дані
             data = this.reader.parsing_res_get(endpoint, "200")
-            let data_str = `let data = ${JSON.stringify(data)}\n`
+            let data_str = `let data: Array<any>|undefined = ${JSON.stringify(data)}\n`
 
             //фільтруємо дані, якщо статус 200
             let filter = `data = filter.filtration(param, data)\n`
