@@ -71,10 +71,9 @@ let reader: IReader = {
                 for(let status in obj.paths[i][j].responses){
                     res.push(status)
                 }
-                buffer = i.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')
 
                 arr.push({
-                    endpoint: buffer,
+                    endpoint: i,
                     method: j,
                     responses: res
                 });

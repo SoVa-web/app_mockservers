@@ -71,10 +71,11 @@ export class Creator{
 
     add_method(method_req:string, endpoint:string, status:Array<string>, parameters:Array<object>|null = null):string{
         let script = ``
+        let endpoint_parameters:string = endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')
         switch(method_req){
             case "get":
                 //console.log(status)
-                script = this.add_method_get(endpoint, status, parameters)
+                script = this.add_method_get(endpoint_parameters, status, parameters)
                 break;
             case "post":
                 break;
@@ -100,6 +101,13 @@ export class Creator{
                 buffer += `${item.name}: req.${this.type_param(item.in)}.${item.name},\n`
             })
             let obj_param = `let param:object = {${buffer}}\n`
+
+            /*
+            валідація параметрів
+            1. перевірка на присутність обов'язкових параметрів
+            2. перевірка типів наявних даних всіх параметрів
+            3. видалення зайвих параметрів перед фільтрацією
+            */
 
             //дістаємо дані
             data = this.reader.parsing_res_get(endpoint, "200")
