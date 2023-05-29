@@ -22,7 +22,7 @@ export class API_LIB{
 
 
     create():void{
-        let reader = new ReadWriter(this.path_openapi)
+        let reader = new ReadWriter(this.path_openapi, this.name_project)
         reader.read_openapi().then(()=>{
             this.creator = new Creator(this.port, this.name_project, this.delay, reader)//створення mock-сервісу відбувається в останню чергу
             this.creator.create()

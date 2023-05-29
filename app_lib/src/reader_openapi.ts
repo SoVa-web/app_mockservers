@@ -3,19 +3,40 @@
 import OpenAPIV3 from 'openapi-types';
 import SwaggerParser from '@apidevtools/swagger-parser'
 import converter from './converter.ts';
-import { writeFile } from 'fs/promises'; 
+import db from './db/database.ts'
 
 class ReadWriter{
     public yaml_content: OpenAPIV3.OpenAPI.Document<{}>|undefined = undefined;
     public path_openapi: string
+    name: string
 
-    constructor(path: string){   
+    constructor(path: string, name_project:string){   
         this.path_openapi = path
+        this.name = name_project
     }
 
     async read_openapi():Promise<void>{
         this.yaml_content = await SwaggerParser.parse(this.path_openapi)
         converter.convert_without_components(this.yaml_content)
+        
+        let buffer:object = {
+            name: this.name,
+            data: this.yaml_content
+        }
+        
+        db.find({name: this.name}, (err: any, data: any)=>{
+            if (err) console.error(err) 
+            if(data.length === 0){
+                db.insert(buffer, (err, data) => {
+                    if (err) console.error(err) 
+                    else console.log('Успішно додано')
+                });
+            }else{
+                console.log("Об'єкт з даним іменем уже існує")
+                db.update({name: this.name}, {$set: { data: this.yaml_content }})
+                db.find({name: this.name}, (err: any, data: any)=>{console.log(data)})
+            }
+        }) 
     }
 
     parsing_endpoints():Array<object>{

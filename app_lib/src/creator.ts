@@ -25,7 +25,7 @@ export class Creator{
     }
 
     public create(){
-        let imports = `import express from 'express'\nimport Logging from '../src/logging.ts'\nimport filter from '../src/filter.ts'\n\n`
+        let imports = `import express from 'express'\nimport Logging from '../src/logging.ts'\nimport filter from '../src/filter.ts'\nimport db from '../src/db/database.ts'\n\n`
 
         let app = `const app = express()\nlet log = new Logging("../log/${this.name_project}_port_${this.port}.log")\n\n`
         let endpoint_list = this.reader.parsing_endpoints()
@@ -89,8 +89,7 @@ export class Creator{
         let data:object = {}// there will be mock-data from exsamples OpenAPI
         let temp:string = ``
         let param:Array<any>|null = parameters
-        let log_req:string = ``
-        let log_res:string = ``
+        let log_req:string, log_res:string = ``
 
         if (parameters != null){
             let body = ``

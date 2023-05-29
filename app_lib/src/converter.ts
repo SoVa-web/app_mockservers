@@ -2,6 +2,7 @@ export class Converter{
     convert_without_components(data: any): void{
         if(data.components){
             rec(data)
+            delete data.components;
         }else{
             return
         }
