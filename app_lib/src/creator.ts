@@ -25,13 +25,15 @@ export class Creator{
     }
 
     public create(){
-        let imports = `import express from 'express'\nimport Logging from '../src/logging.ts'\nimport filter from '../src/filter.ts'\nimport db from '../src/db/database.ts'\n\n`
-
-        let app = `const app = express()\nlet log = new Logging("../log/${this.name_project}_port_${this.port}.log")\n\n`
+        let imports = `import express from 'express'\nimport bodyParser from 'body-parser'\nimport Logging from '../src/logging.ts'\nimport filter from '../src/filter.ts'\nimport * as OpenApiValidator from 'express-openapi-validator'\n\n`
+        let app = `const app = express()\napp.use(bodyParser.json())\napp.use(bodyParser.urlencoded({ extended: true }))\nlet log = new Logging("../log/${this.name_project}_port_${this.port}.log")\n\n`
+        let validator = `app.use(OpenApiValidator.middleware({\n\tapiSpec: path_openapi,\n\tvalidateRequests: true\n}))\n`
+        let name = `const name_project:string = "${this.name_project}"\n`
+        let openapi = `const path_openapi:string = "${this.reader.path_openapi}"\n` 
         let endpoint_list = this.reader.parsing_endpoints()
         this.add_methods(endpoint_list)
         //console.log(endpoint_list)
-        let script_mockservice:string = imports + app + this.methods_script + this.add_script_start(this.port)
+        let script_mockservice:string = imports + name + openapi + app + validator + this.methods_script + this.add_script_start(this.port)
         writeFile(this.path_file_script, script_mockservice)
     }
 
@@ -60,7 +62,7 @@ export class Creator{
         let parameters:Array<object> = []
         endpoint_list.forEach(endpoint_method => {
             parameters = this.reader.parsing_parameters(endpoint_method.method, endpoint_method.endpoint)
-            if(parameters.length === 0){
+            if(parameters.length === 0 || !parameters){
                 this.methods_script += this.add_method(endpoint_method.method, endpoint_method.endpoint, endpoint_method.responses)
             }else{
                 this.methods_script += this.add_method(endpoint_method.method, endpoint_method.endpoint, endpoint_method.responses, parameters)
@@ -71,13 +73,13 @@ export class Creator{
 
     add_method(method_req:string, endpoint:string, status:Array<string>, parameters:Array<object>|null = null):string{
         let script = ``
-        let endpoint_parameters:string = endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')
+
         switch(method_req){
             case "get":
-                //console.log(status)
-                script = this.add_method_get(endpoint_parameters, status, parameters)
+                script = this.add_method_get(endpoint, status, parameters)
                 break;
             case "post":
+                script = this.add_method_post(endpoint, status, parameters)
                 break;
             default:
                 break;
@@ -86,8 +88,50 @@ export class Creator{
         return script
     }
 
+    add_method_post(endpoint: string, status: string[], parameters:Array<object>|null): string {
+        let data:object = {}
+        let temp:string = ``
+        let param:Array<any>|null = parameters
+        let log_req:string, log_res:string = ``
+        let body = ``
+        if(status.includes("200")) data = this.reader.parsing_res_post_get(endpoint, "post", "200")
+        else if(status.includes("201")) data = this.reader.parsing_res_post_get(endpoint, "post", "201")
+
+        let info = `let endpoint:string = "${endpoint}"\nlet method:string = "post"\n\n`
+        //читаємо параметри, якщо вони є
+        let buffer = ``
+        param?.forEach(item => {
+            buffer += `${item.name}: req.${this.type_param(item.in)}.${item.name},\n`
+        })
+        let obj_param = `let param:object = {${buffer}}\n`
+
+        //читаємо тіло запиту
+        let obj = `let obj:object = req.body\n`
+
+        //валідація
+        //пеервіряємо на відповідність параметри
+        //перевіряємо на відповідність тіло запиту
+        let valid = ``
+        
+
+        //дістаємо дані
+        let data_str = `let data: any = ${JSON.stringify(data)}\n`
+
+        //response
+        let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});`
+
+        //log
+        log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", String(JSON.stringify(obj)))\n`
+        log_res = `\n\t\tlog.add_log("Send response GET by ${endpoint}", data)\n`
+
+        body = info + obj + log_req + data_str + log_res + res
+
+        temp = `app.post('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request POST on ${endpoint}")\n\t\t${body}\n\t});\n\n`
+        return temp
+    }
+
     add_method_get(endpoint: string, status:Array<string>, parameters:Array<object>|null):string {
-        let data:object = {}// there will be mock-data from exsamples OpenAPI
+        let data:object = this.reader.parsing_res_post_get(endpoint, "get", "200")// there will be mock-data from exsamples OpenAPI
         let temp:string = ``
         let param:Array<any>|null = parameters
         let log_req:string, log_res:string = ``
@@ -110,7 +154,6 @@ export class Creator{
             */
 
             //дістаємо дані
-            data = this.reader.parsing_res_get(endpoint, "200")
             let data_str = `let data: Array<any>|undefined = ${JSON.stringify(data)}\n`
 
             //фільтруємо дані, якщо статус 200
@@ -125,13 +168,12 @@ export class Creator{
 
             body = obj_param + log_req + data_str + filter + log_res + res
 
-            temp = `app.get('${endpoint}', (req, res) => {\n\t\tconsole.log("Get request GET on ${endpoint}")\n\t\t${body}\n\t});\n\n`
+            temp = `app.get('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request GET on ${endpoint}")\n\t\t${body}\n\t});\n\n`
         }else{
             //console.log(status)
-            data = this.reader.parsing_res_get(endpoint, "200")
             log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", "Without parameters or parameters is wrong")\n\t\t`
             log_res = `\n\t\tlog.add_log("Send response GET by ${endpoint}", ${String(JSON.stringify(data))})\n\t\t`
-            temp = `app.get('${endpoint}', (req, res) => {${log_req}\n\t\tconsole.log("Get request GET on ${endpoint}")\n\t\t${log_res}setTimeout(()=>{res.send(${JSON.stringify(data)})},${this.timeout});\n\t});\n\n`
+            temp = `app.get('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {${log_req}\n\t\tconsole.log("Get request GET on ${endpoint}")\n\t\t${log_res}setTimeout(()=>{res.send(${JSON.stringify(data)})},${this.timeout});\n\t});\n\n`
         }
         
         return temp

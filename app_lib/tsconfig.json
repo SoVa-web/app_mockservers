@@ -17,6 +17,7 @@
     "baseUrl": "./",
     "paths": {
           "express": ["node_modules/express"],
+          "swagger-express-validator":["node_modules/swagger-express-validator"],
           "*": ["src/*"]
         },
     "outDir": "./dist"

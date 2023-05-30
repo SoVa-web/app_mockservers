@@ -12,6 +12,29 @@ servers:
           - '8000'
         default:
           '5000'
+components:
+  schemas:
+    Pizza:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        size:
+          type: string
+        price:
+          type: number
+        url:
+          type: string
+    Error:
+      type: object
+      properties:
+        status:
+          type: number
+        description:
+          type: string
+
 paths:
   /pizza:
     get:
@@ -25,18 +48,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    id:
-                      type: number
-                    name:
-                      type: string
-                    size:
-                      type: string
-                    price:
-                      type: number
-                    url:
-                      type: string
+                  $ref: '#/components/schemas/Pizza'
               example:
                 - id: 1
                   name: "Папероні"
@@ -48,6 +60,7 @@ paths:
                   size: "велика"
                   price: 156.0
                   url: "https://"
+    
   /pizza/{id}:
     get:
       summary: Get a pizza by id
@@ -65,66 +78,121 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - id
-                  - name
-                  - status_availability
-                  - price
-                  - ingredient
-                properties:
-                  id:
-                    type: number
-                  name:
-                    type: string
-                  status_availability:
-                    type: boolean
-                  price:
-                    type: number
-                  size:
-                    type: string
-                  weight:
-                    type: number
-                  calorie_content:
-                    type: number
-                  ingredient:
-                    type: array
-                    items:
-                      type: string
-                  url:
-                    type: string
+                $ref: '#/components/schemas/Pizza'
               examples:
                 example1:
                   value:
                     id: 1
                     name: "Папероні"
-                    status_availability: true
+                    size: "середня"
                     price: 200.0
-                    siza: "середня"
-                    weight: 400.0
-                    calorie_content: 167
-                    ingredient: ["салямі", "зелень", "сир Сулугуні"]
                     url: "https://"
                 example2:
                   value:
                     id: 2
                     name: "Гавайська"
-                    status_availability: true
+                    size: "велика"
                     price: 156.0
-                    siza: "велика"
-                    weight: 400.0
-                    calorie_content: 167
-                    ingredient: ["курка", "зелень", "сир Сулугуні", "ананас"]
                     url: "https://"
-                    
         '400':
           description: Error 400
           content:
             application/json:
               schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update a pizza by id
+      operationId: updatePizzaById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the pizza to update
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pizza'
+      responses:
+        '200':
+          description: Successfully updated the pizza.
+        '204':
+          description: Not content. The pizza was successfully updated.
+        '400':
+          description: Bad Request. The request was invalid or malformed.
+        '404':
+          description: Not Found. The pizza with the specified id was not found.
+        '500':
+          description: Internal Server Error. An error occurred while updating the pizza.
+
+    delete:
+      summary: Delete a pizza by id
+      operationId: deletePizzaById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the pizza to delete
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully deleted the pizza.
+        '202':
+          description: Accepted. The deletion request has been accepted and will be processed.
+        '204':
+          description: Not Content. The pizza was successfully deleted, but there is not additional response data.
+        '400':
+          description: Invalid request. The provided id is not valid.
+        '404':
+          description: Pizza not found. The specified id does not exist.
+        '500':
+          description: Internal server error. An error occurred while deleting the pizza.
+  
+  /pizza/create:
+    post:
+      summary: Create a new pizza and get its id
+      operationId: createPizzaAndGetId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pizza'
+      responses:
+        '200':
+          description: OK. The pizza was created successfully.
+          content:
+            application/json:
+              schema:
                 type: object
                 properties:
-                  status:
+                  id:
                     type: number
-                  description:
+                  message:
                     type: string
+              example:
+                id: 10
+                message: "Pizza created successfully."
+        '201':
+          description: Created. Successfully created a new pizza and obtained its id.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+                  message:
+                    type: string
+              example:
+                id: 10
+                message: "Pizza created successfully."
+        '400':
+          description: Bad Request. The request was invalid or malformed.
+        '500':
+          description: Internal Server Error. An error occurred while creating the pizza.
