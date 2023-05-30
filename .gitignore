@@ -135,3 +135,4 @@ package-lock.json
 # current_project
 test_data_openapi3.yaml
 data
+data_openapi.db
