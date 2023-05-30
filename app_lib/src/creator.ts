@@ -79,7 +79,13 @@ export class Creator{
                 script = this.add_method_get(endpoint, status, parameters)
                 break;
             case "post":
-                script = this.add_method_post(endpoint, status, parameters)
+                script = this.add_method_post(endpoint, status)
+                break;
+            case "put":
+                script = this.add_method_put(endpoint, status)
+                break;
+            case "delete":
+                script = this.add_method_delete(endpoint, status)
                 break;
             default:
                 break;
@@ -88,29 +94,60 @@ export class Creator{
         return script
     }
 
-    add_method_post(endpoint: string, status: string[], parameters:Array<object>|null): string {
+    add_method_delete(endpoint: string, status: string[]): string {
         let data:object = {}
-        let temp:string = ``
-        let log_req:string, log_res:string = ``
-        let body = ``
-        if(status.includes("200")) data = this.reader.parsing_res_post_get(endpoint, "post", "200")
-        else if(status.includes("201")) data = this.reader.parsing_res_post_get(endpoint, "post", "201")
+        if(status.includes("200")) data = this.reader.parsing_res(endpoint, "delete", "200")
+        else if(status.includes("202")) data = this.reader.parsing_res(endpoint, "delete", "202")
+        else if(status.includes("204")) data = this.reader.parsing_res(endpoint, "delete", "204")
 
         let data_str = `let data: any = ${JSON.stringify(data)}\n\t\t`//get mock-data
 
         let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});\n\t\t`//response
 
-        log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", String(JSON.stringify(obj)))\n\t\t`
-        log_res = `log.add_log("Send response GET by ${endpoint}", data)\n\t\t`
+        let log_req:string = `\n\t\tlog.add_log("Get request DELETE by ${endpoint}", String(JSON.stringify(req.body)))\n\t\t`
+        let log_res:string = `log.add_log("Send response DELETE by ${endpoint}", data)\n\t\t`
 
-        body =log_req + data_str + log_res + res
+        let body = log_req + data_str + log_res + res
+        let temp:string = `app.delete('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request DELETE on ${endpoint}")\n\t\t${body}\n\t});\n\n\n`
+        return temp
+    }
 
-        temp = `app.post('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request POST on ${endpoint}")\n\t\t${body}\n\t});\n\n\n`
+    add_method_put(endpoint: string, status: string[]): string {
+        let data:object = {}
+        if(status.includes("200")) data = this.reader.parsing_res(endpoint, "put", "200")
+        else if(status.includes("204")) data = this.reader.parsing_res(endpoint, "put", "204")
+
+        let data_str = `let data: any = ${JSON.stringify(data)}\n\t\t`//get mock-data
+
+        let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});\n\t\t`//response
+
+        let log_req:string = `\n\t\tlog.add_log("Get request PUT by ${endpoint}", String(JSON.stringify(req.body)))\n\t\t`
+        let log_res:string = `log.add_log("Send response PUT by ${endpoint}", data)\n\t\t`
+
+        let body = log_req + data_str + log_res + res
+        let temp:string = `app.put('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request PUT on ${endpoint}")\n\t\t${body}\n\t});\n\n\n`
+        return temp
+    }
+
+    add_method_post(endpoint: string, status: string[]): string {
+        let data:object = {}
+        if(status.includes("200")) data = this.reader.parsing_res(endpoint, "post", "200")
+        else if(status.includes("201")) data = this.reader.parsing_res(endpoint, "post", "201")
+
+        let data_str = `let data: any = ${JSON.stringify(data)}\n\t\t`//get mock-data
+
+        let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});\n\t\t`//response
+
+        let log_req:string = `\n\t\tlog.add_log("Get request POST by ${endpoint}", String(JSON.stringify(req.body)))\n\t\t`
+        let log_res:string = `log.add_log("Send response POST by ${endpoint}", data)\n\t\t`
+
+        let body = log_req + data_str + log_res + res
+        let temp:string = `app.post('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request POST on ${endpoint}")\n\t\t${body}\n\t});\n\n\n`
         return temp
     }
 
     add_method_get(endpoint: string, status:Array<string>, parameters:Array<object>|null):string {
-        let data:object = this.reader.parsing_res_post_get(endpoint, "get", "200")// there will be mock-data from exsamples OpenAPI
+        let data:object = this.reader.parsing_res(endpoint, "get", "200")// there will be mock-data from exsamples OpenAPI
         let temp:string = ``
         let param:Array<any>|null = parameters
         let log_req:string, log_res:string = ``

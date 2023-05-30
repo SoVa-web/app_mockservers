@@ -29,15 +29,15 @@ class ReadWriter{
         return reader.get_parameters(method_req, endpoint, this.yaml_content)
     }
 
-    parsing_res_post_get(endpoint: string, method:string, status: string): any {
-        return reader.get_mockdata_post_get(endpoint, method, status, this.yaml_content)
+    parsing_res(endpoint: string, method:string, status: string): any {
+        return reader.get_mockdata(endpoint, method, status, this.yaml_content)
     }
 }
 
 interface IReader{
     get_endpoints(data:OpenAPIV3.OpenAPI.Document<{}>|undefined):Array<object>
     get_parameters(method_req: string, endpoint: string, data:OpenAPIV3.OpenAPI.Document<{}>|undefined):Array<object>
-    get_mockdata_post_get(endpoint: string, method:string, status: string, data: OpenAPIV3.OpenAPI.Document<{}> | undefined): any;
+    get_mockdata(endpoint: string, method:string, status: string, data: OpenAPIV3.OpenAPI.Document<{}> | undefined): any;
 }
 
 let reader: IReader = {
@@ -97,22 +97,20 @@ let reader: IReader = {
         return arr_parameters;
     },
 
-    get_mockdata_post_get: function (endpoint: string, method:string, status: string, data: OpenAPIV3.OpenAPI.Document<{}> | undefined) {
+    get_mockdata: function (endpoint: string, method:string, status: string, data: OpenAPIV3.OpenAPI.Document<{}> | undefined) {
         let res_data: any = undefined;
         let obj: any = data;
-        if (status[0] === '2') { //if status 2xx we return mock-data
-            let buff = obj?.paths[endpoint]?.[method]?.responses[status]?.content;
-            buff = buff["application/json"]||buff["application/xml"]||buff["application/x-www-form-urlencoded"]
-            if (buff) {
-                if (buff.examples) { // array
-                    res_data = [];
-                    for (let key in buff.examples) {
-                        res_data.push(buff.examples[key].value);
-                    }
+        let buff = obj?.paths[endpoint]?.[method]?.responses[status]?.content;
+        buff = buff?.["application/json"]||buff?.["application/xml"]||buff?.["application/x-www-form-urlencoded"]
+        if (buff) {
+            if (buff.examples) { // array
+                res_data = [];
+                 for (let key in buff.examples) {
+                    res_data.push(buff.examples[key].value);
                 }
-                if (buff.example) res_data = buff.example
-            } else return res_data
-        } else res_data = obj?.paths[endpoint].get.responses[status]
+            }
+             if (buff.example) res_data = buff.example
+        }else res_data = obj?.paths[endpoint]?.[method]?.responses?.[status]
         return res_data;
     }
 }
