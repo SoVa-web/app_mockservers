@@ -2,8 +2,8 @@ import Creator from './creator.ts'
 import ReadWriter from './reader_openapi.ts'
 
 let port = Number(process.argv[2])
-let path_openapi = process.argv[3]//"./testopenapi3_1.yaml"
-let name_project = process.argv[4]//"test_001"
+let path_openapi = process.argv[3]
+let name_project = process.argv[4]
 let timeout = Number(process.argv[5])
 
 export class API_LIB{
@@ -24,7 +24,7 @@ export class API_LIB{
     create():void{
         let reader = new ReadWriter(this.path_openapi, this.name_project)
         reader.read_openapi().then(()=>{
-            this.creator = new Creator(this.port, this.name_project, this.delay, reader)//створення mock-сервісу відбувається в останню чергу
+            this.creator = new Creator(this.port, this.name_project, this.delay, reader)
             this.creator.create()
             console.log("Created mock service by path " +  this.creator.path_file_script)
         })

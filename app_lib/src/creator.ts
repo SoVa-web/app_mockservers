@@ -91,42 +91,21 @@ export class Creator{
     add_method_post(endpoint: string, status: string[], parameters:Array<object>|null): string {
         let data:object = {}
         let temp:string = ``
-        let param:Array<any>|null = parameters
         let log_req:string, log_res:string = ``
         let body = ``
         if(status.includes("200")) data = this.reader.parsing_res_post_get(endpoint, "post", "200")
         else if(status.includes("201")) data = this.reader.parsing_res_post_get(endpoint, "post", "201")
 
-        let info = `let endpoint:string = "${endpoint}"\nlet method:string = "post"\n\n`
-        //читаємо параметри, якщо вони є
-        let buffer = ``
-        param?.forEach(item => {
-            buffer += `${item.name}: req.${this.type_param(item.in)}.${item.name},\n`
-        })
-        let obj_param = `let param:object = {${buffer}}\n`
+        let data_str = `let data: any = ${JSON.stringify(data)}\n\t\t`//get mock-data
 
-        //читаємо тіло запиту
-        let obj = `let obj:object = req.body\n`
+        let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});\n\t\t`//response
 
-        //валідація
-        //пеервіряємо на відповідність параметри
-        //перевіряємо на відповідність тіло запиту
-        let valid = ``
-        
+        log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", String(JSON.stringify(obj)))\n\t\t`
+        log_res = `log.add_log("Send response GET by ${endpoint}", data)\n\t\t`
 
-        //дістаємо дані
-        let data_str = `let data: any = ${JSON.stringify(data)}\n`
+        body =log_req + data_str + log_res + res
 
-        //response
-        let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});`
-
-        //log
-        log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", String(JSON.stringify(obj)))\n`
-        log_res = `\n\t\tlog.add_log("Send response GET by ${endpoint}", data)\n`
-
-        body = info + obj + log_req + data_str + log_res + res
-
-        temp = `app.post('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request POST on ${endpoint}")\n\t\t${body}\n\t});\n\n`
+        temp = `app.post('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request POST on ${endpoint}")\n\t\t${body}\n\t});\n\n\n`
         return temp
     }
 
@@ -139,41 +118,27 @@ export class Creator{
         if (parameters != null){
             let body = ``
 
-            //читаємо параметри
-            let buffer = ``
+            let buffer = `` //read parameters
             param?.forEach(item => {
                 buffer += `${item.name}: req.${this.type_param(item.in)}.${item.name},\n`
             })
-            let obj_param = `let param:object = {${buffer}}\n`
+            let obj_param = `let param:object = {${buffer}\t\t}\n\t\t`
 
-            /*
-            валідація параметрів
-            1. перевірка на присутність обов'язкових параметрів
-            2. перевірка типів наявних даних всіх параметрів
-            3. видалення зайвих параметрів перед фільтрацією
-            */
+            let data_str = `let data: Array<any>|undefined = ${JSON.stringify(data)}\n\t\t`//get mock-data
+            let filter = `data = filter.filtration(param, data)\n\t\t`//filter data
+            let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});`//response
 
-            //дістаємо дані
-            let data_str = `let data: Array<any>|undefined = ${JSON.stringify(data)}\n`
-
-            //фільтруємо дані, якщо статус 200
-            let filter = `data = filter.filtration(param, data)\n`
-
-            //response
-            let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});`
-
-            //log
-            log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", String(JSON.stringify(param)))\n`
-            log_res = `\n\t\tlog.add_log("Send response GET by ${endpoint}", data)\n`
+            log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", String(JSON.stringify(param)))\n\t\t`
+            log_res = `\n\t\tlog.add_log("Send response GET by ${endpoint}", data)\n\t\t`
 
             body = obj_param + log_req + data_str + filter + log_res + res
 
-            temp = `app.get('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request GET on ${endpoint}")\n\t\t${body}\n\t});\n\n`
+            temp = `app.get('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request GET on ${endpoint}")\n\t\t${body}\n\t});\n\n\n`
         }else{
             //console.log(status)
             log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", "Without parameters or parameters is wrong")\n\t\t`
             log_res = `\n\t\tlog.add_log("Send response GET by ${endpoint}", ${String(JSON.stringify(data))})\n\t\t`
-            temp = `app.get('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {${log_req}\n\t\tconsole.log("Get request GET on ${endpoint}")\n\t\t${log_res}setTimeout(()=>{res.send(${JSON.stringify(data)})},${this.timeout});\n\t});\n\n`
+            temp = `app.get('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {${log_req}\n\t\tconsole.log("Get request GET on ${endpoint}")\n\t\t${log_res}setTimeout(()=>{res.send(${JSON.stringify(data)})},${this.timeout});\n\t});\n\n\n`
         }
         
         return temp
