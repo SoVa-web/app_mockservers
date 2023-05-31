@@ -1,11 +1,5 @@
 import { writeFile } from "node:fs/promises"
-import { exec, ChildProcess} from 'child_process';
 import Reader from "./reader_openapi";
-
-interface Object_RunningMockservice{
-    name: string
-    child_mockservice: ChildProcess
-}
 
 export class Creator{
     name_project:string
@@ -14,19 +8,18 @@ export class Creator{
     timeout:number;
     methods_script:string = ``
     reader:Reader
-    arr_child_process:Array<Object_RunningMockservice> = []
 
     constructor(port:number, name_project:string, timeout:number, reader:Reader){
         this.name_project = name_project
         this.port = port
-        this.path_file_script = `../data/${this.name_project}_port_${this.port}.ts`
+        this.path_file_script = `../data/${this.name_project}.ts`
         this.reader = reader
         this.timeout = timeout
     }
 
     public create(){
         let imports = `import express from 'express'\nimport bodyParser from 'body-parser'\nimport Logging from '../src/logging.ts'\nimport filter from '../src/filter.ts'\nimport * as OpenApiValidator from 'express-openapi-validator'\n\n`
-        let app = `const app = express()\napp.use(bodyParser.json())\napp.use(bodyParser.urlencoded({ extended: true }))\nlet log = new Logging("../log/${this.name_project}_port_${this.port}.log")\n\n`
+        let app = `const app = express()\napp.use(bodyParser.json())\napp.use(bodyParser.urlencoded({ extended: true }))\nlet log = new Logging("../log/${this.name_project}.log")\n\n`
         let validator = `app.use(OpenApiValidator.middleware({\n\tapiSpec: path_openapi,\n\tvalidateRequests: true\n}))\n`
         let name = `const name_project:string = "${this.name_project}"\n`
         let openapi = `const path_openapi:string = "${this.reader.path_openapi}"\n` 
@@ -35,27 +28,6 @@ export class Creator{
         //console.log(endpoint_list)
         let script_mockservice:string = imports + name + openapi + app + validator + this.methods_script + this.add_script_start(this.port)
         writeFile(this.path_file_script, script_mockservice)
-    }
-
-    run():void{
-        let child_server = exec(`node --loader ts-node/esm ${this.path_file_script}`);
-
-        child_server.on('exit',(status)=>{
-            console.log(`Процес завершився з кодом виходу: ${status}`);
-        })
-
-        this.arr_child_process.push({
-            name: this.name_project,
-            child_mockservice: child_server
-        })
-    }
-
-    stop(name_mockservice:string):void{ //new ver
-        this.arr_child_process.forEach(item => {
-            if(item.name = name_mockservice){
-                item.child_mockservice.kill()
-            }
-        })
     }
 
     add_methods(endpoint_list:Array<any>):void{
@@ -200,7 +172,6 @@ export class Creator{
     }
 
     random_status(status_res:Array<string>):string{
-        //console.log(status_res)
         return status_res[(Math.floor(Math.random() * status_res.length))]
     }
 }

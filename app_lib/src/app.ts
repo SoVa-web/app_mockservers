@@ -1,46 +1,68 @@
 import Creator from './creator.ts'
 import ReadWriter from './reader_openapi.ts'
+import { exec, ChildProcess} from 'child_process'
+import { unlink } from "node:fs/promises"
+import * as fs from 'fs'
+import Logging from './logging.ts'
 
-let port = Number(process.argv[2])
-let path_openapi = process.argv[3]
-let name_project = process.argv[4]
-let timeout = Number(process.argv[5])
+interface Object_RunningMockservice{
+    name: string
+    child_mockservice: ChildProcess
+}
 
 export class API_LIB{
-    creator: Creator|undefined = undefined
-    port: number
-    path_openapi: string
-    name_project: string
-    delay: number
+    arr_child_process:Array<Object_RunningMockservice> = []
 
-    constructor(port:number, path_openapi:string, name_project:string, delay:number){
-        this.port = port
-        this.path_openapi = path_openapi
-        this.name_project = name_project
-        this.delay = delay
-    }
-
-
-    create():void{
-        let reader = new ReadWriter(this.path_openapi, this.name_project)
+    static create(port:number, path_openapi:string, name_project:string, delay:number):void{
+        let creator:Creator|undefined = undefined
+        let reader = new ReadWriter(path_openapi, name_project)
         reader.read_openapi().then(()=>{
-            this.creator = new Creator(this.port, this.name_project, this.delay, reader)
-            this.creator.create()
-            console.log("Created mock service by path " +  this.creator.path_file_script)
+            creator = new Creator(port, name_project, delay, reader)
+            creator.create()
+            console.log("Created mock service by path " + creator.path_file_script)
         })
     }
 
-    run():void{
-        if(this.creator) this.creator.run()
+
+    run(name_project: string):void{
+        let path_file_script = `../data/${name_project}.ts`
+        let child_server = exec(`node --loader ts-node/esm ${path_file_script}`);
+
+        child_server.on('exit',(status)=>{
+            console.log(`Процес завершився з кодом виходу: ${status}`);
+        })
+
+        this.arr_child_process.push({
+            name: path_file_script,
+            child_mockservice: child_server
+        })
     }
 
-    show_log():string{
-        return ""
+    stop(name:string):void{ //new ver
+        let name_mockservice = `../data/${name}.ts`
+        this.arr_child_process.forEach(item => {
+            if(item.name = name_mockservice){
+                item.child_mockservice.kill()
+            }
+        })
+    }
+
+    static delete(name:string):void{
+        let path_file_script = `../data/${name}.ts`
+        let path_log = `../log/${name}.log`
+        unlink(path_file_script).then(()=>{
+            console.log("File mock-service deleted successfully", path_file_script)
+        })
+        unlink(path_log).then(()=>{
+            console.log("File log deleted successfully", path_log)
+        })
+    }
+
+    static show_log(name:string):string{
+        return Logging.show_log(name)
     }
 }
 
-let api = new API_LIB(port, path_openapi, name_project, timeout)
-api.create()
 
 export default API_LIB
 

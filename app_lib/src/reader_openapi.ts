@@ -1,5 +1,3 @@
-//import {readFile} from 'node:fs/promises'
-//import yaml from  'yaml'
 import OpenAPIV3 from 'openapi-types';
 import SwaggerParser from '@apidevtools/swagger-parser'
 import converter from './converter.ts';
