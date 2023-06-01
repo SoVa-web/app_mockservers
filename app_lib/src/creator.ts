@@ -4,8 +4,9 @@ import Reader from "./reader_openapi";
 export class Creator{
     name_project:string
     port:number
-    path_file_script: string;
-    timeout:number;
+    path_file_script: string
+    path_file_log: string
+    timeout:number
     methods_script:string = ``
     reader:Reader
 
@@ -13,13 +14,14 @@ export class Creator{
         this.name_project = name_project
         this.port = port
         this.path_file_script = `../data/${this.name_project}.ts`
+        this.path_file_log  = `../log/${this.name_project}.log`
         this.reader = reader
         this.timeout = timeout
     }
 
     public create(){
         let imports = `import express from 'express'\nimport bodyParser from 'body-parser'\nimport Logging from '../src/logging.ts'\nimport filter from '../src/filter.ts'\nimport * as OpenApiValidator from 'express-openapi-validator'\n\n`
-        let app = `const app = express()\napp.use(bodyParser.json())\napp.use(bodyParser.urlencoded({ extended: true }))\nlet log = new Logging("../log/${this.name_project}.log")\n\n`
+        let app = `const app = express()\napp.use(bodyParser.json())\napp.use(bodyParser.urlencoded({ extended: true }))\nlet log = new Logging("${this.path_file_log}")\n\n`
         let validator = `app.use(OpenApiValidator.middleware({\n\tapiSpec: path_openapi,\n\tvalidateRequests: true\n}))\n`
         let name = `const name_project:string = "${this.name_project}"\n`
         let openapi = `const path_openapi:string = "${this.reader.path_openapi}"\n` 
@@ -28,6 +30,7 @@ export class Creator{
         //console.log(endpoint_list)
         let script_mockservice:string = imports + name + openapi + app + validator + this.methods_script + this.add_script_start(this.port)
         writeFile(this.path_file_script, script_mockservice)
+        writeFile(this.path_file_log, "")
     }
 
     add_methods(endpoint_list:Array<any>):void{
