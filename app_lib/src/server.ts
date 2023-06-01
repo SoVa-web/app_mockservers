@@ -75,6 +75,11 @@ app.get("/log", (req, res)=>{
 
 app.get("/list", (req, res)=>{
     res.send(api.get_list())
+    try{
+        res.status(200).send(JSON.stringify(api.get_list()))
+    }catch{
+        res.status(500).send(JSON.stringify(`Failed getting list mock-services`))
+    }
 })
 
 app.listen(port, () => {
