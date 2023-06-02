@@ -20,17 +20,18 @@ export class Logging{
         })
     }
 
-    static show_log(name:string):string{
-        let content:string = "Error reading"
+    static show_log(name:string):Promise<string>{
+        let cont:string = "Error reading"
         let path:string = `../log/${name}.log`
-        fs.readFile(path, 'utf-8', (error, content)=>{
-            if (error) {
-                console.error(`Error reading file ${path}`, error);
+        return new Promise((resolve, reject) => {
+            fs.readFile(path, 'utf8', (err, content) => {
+              if (err) {
+                reject(err);
               } else {
-                return content
+                resolve(content);
               }
+            });
         })
-        return content
     }
 }
 

@@ -36,7 +36,7 @@ export class API_LIB{
 
         this.arr_child_process.push({
             port: port,
-            name: path_file_script,
+            name: name_project,
             child_mockservice: child_server
         })
     }
@@ -63,19 +63,20 @@ export class API_LIB{
         return res
     }
 
-    static delete(name:string):void{
+    static async delete(name:string):Promise<void>{
         let path_file_script = `../data/${name}.ts`
         let path_log = `../log/${name}.log`
-        unlink(path_file_script).then(()=>{
+        await unlink(path_file_script).then(()=>{
             console.log("File mock-service deleted successfully", path_file_script)
         })
-        unlink(path_log).then(()=>{
+        await unlink(path_log).then(()=>{
             console.log("File log deleted successfully", path_log)
         })
     }
 
-    static show_log(name:string):string{
-        return Logging.show_log(name)
+    static show_log(name:string):Promise<string>{
+        let data = Logging.show_log(name)
+        return data
     }
 
     static show_log_path(name:string):void{

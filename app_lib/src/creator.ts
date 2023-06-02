@@ -22,7 +22,12 @@ export class Creator{
     public create(){
         let imports = `import express from 'express'\nimport bodyParser from 'body-parser'\nimport Logging from '../src/logging.ts'\nimport filter from '../src/filter.ts'\nimport * as OpenApiValidator from 'express-openapi-validator'\n\n`
         let app = `const app = express()\napp.use(bodyParser.json())\napp.use(bodyParser.urlencoded({ extended: true }))\nlet log = new Logging("${this.path_file_log}")\n\n`
-        let validator = `app.use(OpenApiValidator.middleware({\n\tapiSpec: path_openapi,\n\tvalidateRequests: true,\n\tvalidateResponses: true\n}))\n`
+        let validator = `app.use(OpenApiValidator.middleware({\n\tapiSpec: path_openapi,\n\tvalidateRequests: true,\n\tvalidateResponses: true\n}))\napp.use((req, res, next) => {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+            res.setHeader('Access-Control-Allow-Headers', '*')
+            next();
+          });\n`
         let name = `const name_project:string = "${this.name_project}"\n`
         let openapi = `const path_openapi:string = "${this.reader.path_openapi}"\n` 
         let endpoint_list = this.reader.parsing_endpoints()
@@ -30,7 +35,7 @@ export class Creator{
         //console.log(endpoint_list)
         let script_mockservice:string = imports + name + openapi + app + validator + this.methods_script + this.add_script_start(this.port)
         writeFile(this.path_file_script, script_mockservice)
-        writeFile(this.path_file_log, "")
+        writeFile(this.path_file_log, `Mock-service ${this.name_project} \n`)
     }
 
     add_methods(endpoint_list:Array<any>):void{

@@ -52,21 +52,21 @@ app.get("/stop", (req, res)=>{
     }
 })
 
-app.get("/delete", (req, res)=>{
+app.get("/delete", async (req, res)=>{
     let name_project:string = String(req.query.name_project)
     try{
-        API_LIB.delete(name_project)
+        await API_LIB.delete(name_project)
         res.status(200).send(JSON.stringify(`Successfully deleted mock-service ${name_project}`))
     }catch{
         res.status(500).send(JSON.stringify(`Failed deleting mock-service ${name_project}`))
     }
 })
 
-app.get("/log", (req, res)=>{
-    let name_project:string = String(req.query.name_projec)
+app.get("/log", async (req, res)=>{
+    let name_project:string = String(req.query.name_project)
     let data = ""
     try{
-        data = API_LIB.show_log(name_project)
+        data = await API_LIB.show_log(name_project)
         res.status(200).send(JSON.stringify(data))
     }catch{
         res.status(500).send(JSON.stringify(`Failed reading logs in mock-service ${name_project}`))
