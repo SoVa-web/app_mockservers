@@ -5,41 +5,37 @@ import converter from './converter.ts';
 class ReadWriter{
     public yaml_content: OpenAPIV3.OpenAPI.Document<{}>|undefined = undefined;
     public path_openapi: string
-    name: string
 
-    constructor(path: string, name_project:string){   
+    constructor(path: string){   
         this.path_openapi = path
-        this.name = name_project
     }
 
     async read_openapi():Promise<void>{
-        this.yaml_content = await SwaggerParser.parse(this.path_openapi)
+        try{
+            this.yaml_content = await SwaggerParser.parse(this.path_openapi)
+            
+        }catch(err){
+            console.error("Reading is failed in method read_openapi()")
+            return
+        }
         converter.convert_without_components(this.yaml_content)
     }
 
     parsing_endpoints():Array<object>{
-        let buf = reader.get_endpoints(this.yaml_content)
+        let buf = this.get_endpoints(this.yaml_content)
         //console.log(buf)
         return  buf
     }
 
     parsing_parameters(method_req: string, endpoint: string): Array<object> {
-        return reader.get_parameters(method_req, endpoint, this.yaml_content)
+        return this.get_parameters(method_req, endpoint, this.yaml_content)
     }
 
     parsing_res(endpoint: string, method:string, status: string): any {
-        return reader.get_mockdata(endpoint, method, status, this.yaml_content)
+        return this.get_mockdata(endpoint, method, status, this.yaml_content)
     }
-}
 
-interface IReader{
-    get_endpoints(data:OpenAPIV3.OpenAPI.Document<{}>|undefined):Array<object>
-    get_parameters(method_req: string, endpoint: string, data:OpenAPIV3.OpenAPI.Document<{}>|undefined):Array<object>
-    get_mockdata(endpoint: string, method:string, status: string, data: OpenAPIV3.OpenAPI.Document<{}> | undefined): any;
-}
-
-let reader: IReader = {
-    get_endpoints: function (data: OpenAPIV3.OpenAPI.Document<{}>): Array<object> {
+    private get_endpoints(data: OpenAPIV3.OpenAPI.Document<{}>|undefined): Array<object> {
         let obj: any = data;
         let arr: Array<any> = [];
         let buffer: string = "";
@@ -59,9 +55,9 @@ let reader: IReader = {
         }
 
         return arr;
-    },
+    }
 
-    get_parameters: function (method_req: string, endpoint: string, data: any): Array<object> {
+    private get_parameters(method_req: string, endpoint: string, data: any): Array<object> {
         let arr_parameters: Array<object> = [];
         let paths = data.paths;
         if (paths) {
@@ -93,9 +89,9 @@ let reader: IReader = {
             }
         }
         return arr_parameters;
-    },
+    }
 
-    get_mockdata: function (endpoint: string, method:string, status: string, data: OpenAPIV3.OpenAPI.Document<{}> | undefined) {
+    private get_mockdata(endpoint: string, method:string, status: string, data: OpenAPIV3.OpenAPI.Document<{}> | undefined) {
         let res_data: any = undefined;
         let obj: any = data;
         let buff = obj?.paths[endpoint]?.[method]?.responses[status]?.content;

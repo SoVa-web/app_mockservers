@@ -16,19 +16,17 @@ app.use((req, res, next) => {
     next();
   });
 
-app.get("/create", (req, res)=>{
+app.get("/create", async (req, res)=>{
     let port:any = req.query.port
     console.log("Порт", req.query.port)
     let path_openapi:string = String(req.query.path_openapi)
     let name_project:string = String(req.query.name_project)
     let delay:number = Number(req.query.delay)
-
-    try{
-        API_LIB.create(port, path_openapi, name_project, delay)
-    }catch(err){
+    let status_er = await API_LIB.create(port, path_openapi, name_project, delay)
+    if(status_er === -1)
         res.status(400).send(JSON.stringify('Invalid data from client'))
-    }
-    res.status(200).send(JSON.stringify(`Successfully created mock-service with name:  ${name_project}`))
+    else 
+        res.status(200).send(JSON.stringify(`Successfully created mock-service with name:  ${name_project}`))
 })
 
 app.get("/run", (req, res)=>{
@@ -37,7 +35,7 @@ app.get("/run", (req, res)=>{
     try{
         api.run(name_project, port)
     }catch(err){
-        res.status(500).send(JSON.stringify('Mock-services not running, happened error'))
+        res.status(500).send(JSON.stringify('Mock-services not running, script for runnnig not found'))
     }
     res.status(200).send(JSON.stringify(`Successfully ran mock-service ${name_project}`))
 })

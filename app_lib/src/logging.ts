@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import path from 'path'
 
 export class Logging{
-    path_log:string
+    private path_log:string
 
     constructor(path_log:string){
         this.path_log = path_log
@@ -14,7 +14,7 @@ export class Logging{
         let content:string = ""
         content += data
         content += JSON.stringify(req_res_data)
-        content += `time: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} UTC \n`
+        content += `time: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} UTC \n\n`
         fs.appendFile(this.path_log, content, (error)=>{
             console.error(`Запис логів події у файл ${this.path_log}`, error);
         })

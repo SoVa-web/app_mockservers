@@ -5,40 +5,52 @@ import { unlink } from "node:fs/promises"
 import Logging from './logging.ts'
 import path from 'path'
 
-interface Object_RunningMockservice{
+
+interface Object_Running_Mockservice{
     port: number
     name: string
     child_mockservice: ChildProcess
 }
 
 export class API_LIB{
-    arr_child_process:Array<Object_RunningMockservice> = []
+    arr_child_process:Array<Object_Running_Mockservice> = []
 
-    static create(port:number, path_openapi:string, name_project:string, delay:number):void{
+    static async create(port:number, path_openapi:string, name_project:string, delay:number):Promise<number>{
         let creator:Creator|undefined = undefined
-        let reader = new ReadWriter(path_openapi, name_project)
-        reader.read_openapi().then(()=>{
-            creator = new Creator(port, name_project, delay, reader)
-            creator.create()
-            console.log("Created mock service by path " + creator.path_file_script + "\n")
-            console.log(`Created log file by path ${path.resolve(creator.path_file_log)}`)
-        })
+        let reader = new ReadWriter(path_openapi)
+        let status_error = await reader.read_openapi().then(()=>{
+                creator = new Creator(port, name_project, delay, reader)
+                try{
+                    creator.create()
+                }catch(err){
+                    return -1
+                }
+                console.log("Created mock service by path " + creator.path_file_script + "\n")
+                console.log(`Created log file by path ${path.resolve(creator.path_file_log)}`)
+                return 1
+            })  
+        return status_error         
+
     }
 
 
     run(name_project: string, port:number):void{
         let path_file_script = `../data/${name_project}.ts`
-        let child_server = exec(`node --loader ts-node/esm ${path_file_script}`);
+        try{
+            let child_server = exec(`node --loader ts-node/esm ${path_file_script}`);
 
-        child_server.on('exit',(status)=>{
-            console.log(`Процес завершився з кодом виходу: ${status}`);
-        })
+            child_server.on('exit',(status)=>{
+                console.log(`The process "${name_project}" has completed with an exit code: ${status}`);
+            })
 
-        this.arr_child_process.push({
-            port: port,
-            name: name_project,
-            child_mockservice: child_server
-        })
+            this.arr_child_process.push({
+                port: port,
+                name: name_project,
+                child_mockservice: child_server
+            })
+        }catch(err){
+            throw new Error("Error running")
+        }
     }
 
     stop(name:string):void{ //new ver
