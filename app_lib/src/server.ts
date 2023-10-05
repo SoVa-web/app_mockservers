@@ -66,7 +66,7 @@ app.get("/log", async (req, res)=>{
     let name_project:string = String(req.query.name_project)
     let data = ""
     try{
-        data = await API_LIB.show_log(name_project)
+        data = await redis_server.get_log_redis(name_project)
         res.status(200).send(JSON.stringify(data))
     }catch{
         res.status(500).send(JSON.stringify(`Failed reading logs in mock-service ${name_project}`))

@@ -36,13 +36,13 @@ export class Logging_Redis{
             this.redis_server.lrange(name, 0, -1, (err, reply) => {
                 if (err) {
                     reject(err);
-                  } else {
-                    console.log(`Logs: ${reply}`);
+                } else {
                     reply?.forEach(item => {
                         content += item
+                        content += "\n\n"
                     })
                     resolve(content)
-                  }              
+                }              
             });
         })
     }
