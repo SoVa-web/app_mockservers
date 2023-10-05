@@ -9,6 +9,15 @@ export class Logging{
         this.path_log = path_log
     }
 
+    add_log_redis(data:string, req_res_data:any):void{
+
+    }
+
+    show_log_redis(name:string){
+
+    }
+
+    //method adding logs
     add_log(data:string, req_res_data:any):void{
         let date = new Date()
         let content:string = ""
@@ -20,6 +29,7 @@ export class Logging{
         })
     }
 
+    //method showing logs
     static show_log(name:string):Promise<string>{
         let cont:string = "Error reading"
         let path:string = `../log/${name}.log`

@@ -9,19 +9,22 @@ export class Creator{
     private timeout:number
     private methods_script:string = ``
     private reader:Reader
+    private source:string
 
-    constructor(port:number, name_project:string, timeout:number, reader:Reader){
+    constructor(port:number, name_project:string, timeout:number, reader:Reader, source:string){
         this.name_project = name_project
         this.port = port
         this.path_file_script = `../data/${this.name_project}.ts`
         this.path_file_log  = `../log/${this.name_project}.log`
         this.reader = reader
         this.timeout = timeout
+        this.source = source
+        console.log("Інтерфейс з якого викликали створення мок-сервісу" + this.source)
     }
 
     public create(){
         let imports = `import express from 'express'\nimport bodyParser from 'body-parser'\nimport Logging from '../src/logging.ts'\nimport filter from '../src/filter.ts'\nimport * as OpenApiValidator from 'express-openapi-validator'\n\n`
-        let app = `const app = express()\napp.use(bodyParser.json())\napp.use(bodyParser.urlencoded({ extended: true }))\nlet log = new Logging("${this.path_file_log}")\n\n`
+        let app = `const app = express()\napp.use(bodyParser.json())\napp.use(bodyParser.urlencoded({ extended: true }))\nlet log = new Logging("${this.path_file_log}")\n\n\n`
         let validator = `app.use(OpenApiValidator.middleware({\n\tapiSpec: path_openapi,\n\tvalidateRequests: true,\n\tvalidateResponses: true\n}))\napp.use((req, res, next) => {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');

@@ -1,6 +1,7 @@
 import express from 'express'
 import bodyParser from 'body-parser'
 import API_LIB from './app.ts'
+import redis_server from './redis_logging.ts'
 
 const port = 5002
 const api = new API_LIB()
@@ -60,6 +61,7 @@ app.get("/delete", async (req, res)=>{
     }
 })
 
+//reading logs and sending it to client
 app.get("/log", async (req, res)=>{
     let name_project:string = String(req.query.name_project)
     let data = ""
