@@ -33,6 +33,8 @@
     "nodemon": "^2.0.15",
     "openapi-types": "^12.1.3",
     "path": "^0.12.7",
+    "socket.io": "^4.1.1",
+    "socket.io-client": "^4.1.2",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
     "ts-transformer-keys": "^0.4.3",

@@ -2,13 +2,17 @@ import express from 'express'
 import bodyParser from 'body-parser'
 import API_LIB from './app.ts'
 import redis_server from './redis_logging.ts'
+import http from 'http';
+import { Server } from 'socket.io';
 
 const port = 5002
+const port_socket = 5003
 const api = new API_LIB()
 
 const app = express()
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
+
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -80,6 +84,35 @@ app.get("/list", (req, res)=>{
     }catch{
         res.status(500).send(JSON.stringify(`Failed getting list mock-services`))
     }
+})
+
+const server = http.createServer(app)
+  const io = new Server(server, {
+        path: '/',
+        cors: {
+            origin: "*",
+            methods: ["GET", "POST", "PUT", "DELETE"],
+            
+            credentials: true
+        },
+        allowEIO3: true
+    })
+  
+  io.on('connection', (socket)=>{
+      console.log("Client connected")
+  
+      socket.on('redis', (data) => {
+        console.log(data)
+          io.emit('log', data)
+      });
+      
+      socket.on('disconnect', () => {
+          console.log('Client disconnected');
+      });
+  })
+
+server.listen(port_socket, () => {
+    console.log(`Web-socket server is starting on ${port_socket}`)
 })
 
 app.listen(port, () => {

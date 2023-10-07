@@ -1,12 +1,20 @@
 import Redis from 'ioredis'
+import socketIOClient from 'socket.io-client'
 
 export class Logging_Redis{
     public redis_server: Redis
+    private io: any
 
     constructor(){
         this.redis_server = new Redis({
             host: 'localhost',
             port: 6379
+        })
+
+        this.io = socketIOClient('http://localhost:5003/', {
+            query:{
+                username: "redis"
+            }
         })
     }
 
@@ -18,7 +26,12 @@ export class Logging_Redis{
         content += JSON.stringify(req_res_data)
         content += `time: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} UTC \n\n`
 
-        //public in pub/sub redis channel log
+        this.io.emit('redis', {
+            name_service: name,
+            content: content
+        })
+
+//        this.io.disconnect()
         
         try {
             this.redis_server.rpush(name, content, (err, reply) => {
