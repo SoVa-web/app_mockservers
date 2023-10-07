@@ -30,8 +30,6 @@ export class Logging_Redis{
             name_service: name,
             content: content
         })
-
-//        this.io.disconnect()
         
         try {
             this.redis_server.rpush(name, content, (err, reply) => {
@@ -52,7 +50,7 @@ export class Logging_Redis{
                 } else {
                     reply?.forEach(item => {
                         content += item
-                        content += "\n\n"
+                        content += "\n"
                     })
                     resolve(content)
                 }              

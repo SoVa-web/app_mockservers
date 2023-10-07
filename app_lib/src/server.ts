@@ -23,7 +23,6 @@ app.use((req, res, next) => {
 
 app.get("/create", async (req, res)=>{
     let port:any = req.query.port
-    console.log("Порт", req.query.port)
     let path_openapi:string = String(req.query.path_openapi)
     let name_project:string = String(req.query.name_project)
     let delay:number = Number(req.query.delay)
@@ -87,29 +86,28 @@ app.get("/list", (req, res)=>{
 })
 
 const server = http.createServer(app)
-  const io = new Server(server, {
-        path: '/',
-        cors: {
-            origin: "*",
-            methods: ["GET", "POST", "PUT", "DELETE"],
-            
-            credentials: true
-        },
-        allowEIO3: true
-    })
+const io = new Server(server, {
+    path: '/',
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        credentials: true
+    },
+    allowEIO3: true
+})
   
-  io.on('connection', (socket)=>{
-      console.log("Client connected")
+io.on('connection', (socket)=>{
+    console.log("Client connected")
   
-      socket.on('redis', (data) => {
+    socket.on('redis', (data) => {
         console.log(data)
-          io.emit('log', data)
-      });
-      
-      socket.on('disconnect', () => {
-          console.log('Client disconnected');
-      });
-  })
+        io.emit('log', data)
+    });
+})
+
+io.on('disconnect', () => {
+    console.log('Client disconnected');
+});
 
 server.listen(port_socket, () => {
     console.log(`Web-socket server is starting on ${port_socket}`)

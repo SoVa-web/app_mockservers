@@ -19,7 +19,7 @@ export class Creator{
         this.reader = reader
         this.timeout = timeout
         this.source = source
-        console.log("Інтерфейс з якого викликали створення мок-сервісу " + this.source)
+        console.log("The interface from which the creation of the mock service was called — " + this.source)
     }
 
     public create(){
@@ -43,7 +43,6 @@ export class Creator{
         try{
             let endpoint_list = this.reader.parsing_endpoints()
             this.add_methods(endpoint_list)
-            //console.log(endpoint_list)
             let script_mockservice:string = imports + name + openapi + app + validator + this.methods_script + this.add_script_start(this.port)
             writeFile(this.path_file_script, script_mockservice)
             if(this.source != "ui"){
@@ -63,7 +62,6 @@ export class Creator{
             }else{
                 this.methods_script += this.add_method(endpoint_method.method, endpoint_method.endpoint, endpoint_method.responses, parameters)
             }
-            //console.log(this.methods_script)
         })
     }
 
@@ -86,7 +84,6 @@ export class Creator{
             default:
                 break;
         }
-        //console.log(script)
         return script
     }
 
@@ -195,7 +192,6 @@ export class Creator{
 
             temp = `app.get('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request GET on ${endpoint}")\n\t\t${body}\n\t});\n\n\n`
         }else{
-            //console.log(status)
             if(this.source == "ui"){
                 log_req = `\n\t\tredis_server.add_log_redis("${this.name_project}", "Get request GET by ${endpoint}", "Without parameters or parameters is wrong")\n\t\t`
                 log_res = `\n\t\tredis_server.add_log_redis("${this.name_project}", "Send response GET by ${endpoint}", ${String(JSON.stringify(data))})\n\t\t`

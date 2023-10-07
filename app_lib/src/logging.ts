@@ -25,7 +25,7 @@ export class Logging{
         content += JSON.stringify(req_res_data)
         content += `time: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} UTC \n\n`
         fs.appendFile(this.path_log, content, (error)=>{
-            console.error(`Запис логів події у файл ${this.path_log}`, error);
+            //console.log(`Recording logs in file ${this.path_log}`, error);
         })
     }
 

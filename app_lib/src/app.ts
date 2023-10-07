@@ -26,7 +26,7 @@ export class API_LIB{
                     return -1
                 }
                 console.log("Created mock service by path " + creator.path_file_script + "\n")
-                console.log(`Created log file by path ${path.resolve(creator.path_file_log)}`)
+                if(source != "ui") console.log(`Created log file by path ${path.resolve(creator.path_file_log)}`)
                 return 1
             })  
         return status_error         
