@@ -1,13 +1,18 @@
 import express from 'express'
 import bodyParser from 'body-parser'
 import API_LIB from './app.ts'
+import redis_server from './redis_logging.ts'
+import http from 'http';
+import { Server } from 'socket.io';
 
 const port = 5002
+const port_socket = 5003
 const api = new API_LIB()
 
 const app = express()
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
+
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -18,7 +23,6 @@ app.use((req, res, next) => {
 
 app.get("/create", async (req, res)=>{
     let port:any = req.query.port
-    console.log("Порт", req.query.port)
     let path_openapi:string = String(req.query.path_openapi)
     let name_project:string = String(req.query.name_project)
     let delay:number = Number(req.query.delay)
@@ -60,11 +64,12 @@ app.get("/delete", async (req, res)=>{
     }
 })
 
+//reading logs and sending it to client
 app.get("/log", async (req, res)=>{
     let name_project:string = String(req.query.name_project)
     let data = ""
     try{
-        data = await API_LIB.show_log(name_project)
+        data = await redis_server.get_log_redis(name_project)
         res.status(200).send(JSON.stringify(data))
     }catch{
         res.status(500).send(JSON.stringify(`Failed reading logs in mock-service ${name_project}`))
@@ -78,6 +83,34 @@ app.get("/list", (req, res)=>{
     }catch{
         res.status(500).send(JSON.stringify(`Failed getting list mock-services`))
     }
+})
+
+const server = http.createServer(app)
+const io = new Server(server, {
+    path: '/',
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        credentials: true
+    },
+    allowEIO3: true
+})
+  
+io.on('connection', (socket)=>{
+    console.log("Client connected")
+  
+    socket.on('redis', (data) => {
+        console.log(data)
+        io.emit('log', data)
+    });
+})
+
+io.on('disconnect', () => {
+    console.log('Client disconnected');
+});
+
+server.listen(port_socket, () => {
+    console.log(`Web-socket server is starting on ${port_socket}`)
 })
 
 app.listen(port, () => {

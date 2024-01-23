@@ -9,19 +9,28 @@ export class Creator{
     private timeout:number
     private methods_script:string = ``
     private reader:Reader
+    private source:string
 
-    constructor(port:number, name_project:string, timeout:number, reader:Reader){
+    constructor(port:number, name_project:string, timeout:number, reader:Reader, source:string){
         this.name_project = name_project
         this.port = port
         this.path_file_script = `../data/${this.name_project}.ts`
         this.path_file_log  = `../log/${this.name_project}.log`
         this.reader = reader
         this.timeout = timeout
+        this.source = source
+        console.log("The interface from which the creation of the mock service was called — " + this.source)
     }
 
     public create(){
         let imports = `import express from 'express'\nimport bodyParser from 'body-parser'\nimport Logging from '../src/logging.ts'\nimport filter from '../src/filter.ts'\nimport * as OpenApiValidator from 'express-openapi-validator'\n\n`
-        let app = `const app = express()\napp.use(bodyParser.json())\napp.use(bodyParser.urlencoded({ extended: true }))\nlet log = new Logging("${this.path_file_log}")\n\n`
+        if(this.source == "ui")
+            imports += `import redis_server from '../src/redis_logging.ts'\n\n`
+        let app = `const app = express()\napp.use(bodyParser.json())\napp.use(bodyParser.urlencoded({ extended: true }))\n\n\n`
+        if(this.source == "terminal")
+            app += `let log = new Logging("${this.path_file_log}")\n\n`
+        else
+            app += `\n\t\tredis_server.add_log_redis("${this.name_project}", "Mock-service ${this.name_project} is running ", "")\n\t\t`
         let validator = `app.use(OpenApiValidator.middleware({\n\tapiSpec: path_openapi,\n\tvalidateRequests: true,\n\tvalidateResponses: true\n}))\napp.use((req, res, next) => {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -30,13 +39,15 @@ export class Creator{
           });\n`
         let name = `const name_project:string = "${this.name_project}"\n`
         let openapi = `const path_openapi:string = "${this.reader.path_openapi}"\n` 
+        
         try{
             let endpoint_list = this.reader.parsing_endpoints()
             this.add_methods(endpoint_list)
-            //console.log(endpoint_list)
             let script_mockservice:string = imports + name + openapi + app + validator + this.methods_script + this.add_script_start(this.port)
             writeFile(this.path_file_script, script_mockservice)
-            writeFile(this.path_file_log, `Mock-service ${this.name_project} \n`)
+            if(this.source != "ui"){
+                writeFile(this.path_file_log, `Mock-service ${this.name_project} \n`)
+            }
         }catch(err){
             throw new Error("Error creating")
         }
@@ -51,7 +62,6 @@ export class Creator{
             }else{
                 this.methods_script += this.add_method(endpoint_method.method, endpoint_method.endpoint, endpoint_method.responses, parameters)
             }
-            //console.log(this.methods_script)
         })
     }
 
@@ -74,12 +84,13 @@ export class Creator{
             default:
                 break;
         }
-        //console.log(script)
         return script
     }
 
     private add_method_delete(endpoint: string, status: string[]): string {
         let data:object = {}
+        let log_req:string = ""
+        let log_res:string = ""
         if(status.includes("200")) data = this.reader.parsing_res(endpoint, "delete", "200")
         else if(status.includes("202")) data = this.reader.parsing_res(endpoint, "delete", "202")
         else if(status.includes("204")) data = this.reader.parsing_res(endpoint, "delete", "204")
@@ -88,8 +99,13 @@ export class Creator{
 
         let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});\n\t\t`//response
 
-        let log_req:string = `\n\t\tlog.add_log("Get request DELETE by ${endpoint}", String(JSON.stringify(req.body)))\n\t\t`
-        let log_res:string = `log.add_log("Send response DELETE by ${endpoint}", data)\n\t\t`
+        if(this.source == "ui"){
+            log_req = `\n\t\tredis_server.add_log_redis("${this.name_project}", "Get request DELETE by ${endpoint}", String(JSON.stringify(req.body)))\n\t\t`
+            log_res = `redis_server.add_log_redis("${this.name_project}", "Send response DELETE by ${endpoint}", data)\n\t\t`
+        }else{
+            log_req = `\n\t\tlog.add_log("Get request DELETE by ${endpoint}", String(JSON.stringify(req.body)))\n\t\t`
+            log_res = `log.add_log("Send response DELETE by ${endpoint}", data)\n\t\t`
+        }
 
         let body = log_req + data_str + log_res + res
         let temp:string = `app.delete('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request DELETE on ${endpoint}")\n\t\t${body}\n\t});\n\n\n`
@@ -98,6 +114,8 @@ export class Creator{
 
     private add_method_put(endpoint: string, status: string[]): string {
         let data:object = {}
+        let log_req:string = ""
+        let log_res:string = ""
         if(status.includes("200")) data = this.reader.parsing_res(endpoint, "put", "200")
         else if(status.includes("204")) data = this.reader.parsing_res(endpoint, "put", "204")
 
@@ -105,8 +123,13 @@ export class Creator{
 
         let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});\n\t\t`//response
 
-        let log_req:string = `\n\t\tlog.add_log("Get request PUT by ${endpoint}", String(JSON.stringify(req.body)))\n\t\t`
-        let log_res:string = `log.add_log("Send response PUT by ${endpoint}", data)\n\t\t`
+        if(this.source == "ui"){
+            log_req = `\n\t\tredis_server.add_log_redis("${this.name_project}", "Get request PUT by ${endpoint}", String(JSON.stringify(req.body)))\n\t\t`
+            log_res = `redis_server.add_log_redis("${this.name_project}", "Send response PUT by ${endpoint}", data)\n\t\t`
+        }else{
+            log_req = `\n\t\tlog.add_log("Get request PUT by ${endpoint}", String(JSON.stringify(req.body)))\n\t\t`
+            log_res = `log.add_log("Send response PUT by ${endpoint}", data)\n\t\t`
+        }
 
         let body = log_req + data_str + log_res + res
         let temp:string = `app.put('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request PUT on ${endpoint}")\n\t\t${body}\n\t});\n\n\n`
@@ -115,6 +138,8 @@ export class Creator{
 
     private add_method_post(endpoint: string, status: string[]): string {
         let data:object = {}
+        let log_req:string = ""
+        let log_res:string = ""
         if(status.includes("200")) data = this.reader.parsing_res(endpoint, "post", "200")
         else if(status.includes("201")) data = this.reader.parsing_res(endpoint, "post", "201")
 
@@ -122,8 +147,13 @@ export class Creator{
 
         let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});\n\t\t`//response
 
-        let log_req:string = `\n\t\tlog.add_log("Get request POST by ${endpoint}", String(JSON.stringify(req.body)))\n\t\t`
-        let log_res:string = `log.add_log("Send response POST by ${endpoint}", data)\n\t\t`
+        if(this.source == "ui"){
+            log_req = `\n\t\tredis_server.add_log_redis("${this.name_project}", "Get request POST by ${endpoint}", String(JSON.stringify(req.body)))\n\t\t`
+            log_res = `redis_server.add_log_redis("${this.name_project}", "Send response POST by ${endpoint}", data)\n\t\t`
+        }else{
+            log_req = `\n\t\tlog.add_log("Get request POST by ${endpoint}", String(JSON.stringify(req.body)))\n\t\t`
+            log_res = `log.add_log("Send response POST by ${endpoint}", data)\n\t\t`
+        }
 
         let body = log_req + data_str + log_res + res
         let temp:string = `app.post('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request POST on ${endpoint}")\n\t\t${body}\n\t});\n\n\n`
@@ -149,16 +179,27 @@ export class Creator{
             let filter = `data = filter.filtration(param, data)\n\t\t`//filter data
             let res = `setTimeout(()=>{res.send(JSON.stringify(data))},${this.timeout});`//response
 
-            log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", String(JSON.stringify(param)))\n\t\t`
-            log_res = `\n\t\tlog.add_log("Send response GET by ${endpoint}", data)\n\t\t`
+            if(this.source == "ui"){
+                log_req = `\n\t\tredis_server.add_log_redis("${this.name_project}", "Get request GET by ${endpoint}", String(JSON.stringify(param)))\n\t\t`
+                log_res = `\n\t\tredis_server.add_log_redis("${this.name_project}", "Send response GET by ${endpoint}", data)\n\t\t`
+            }else{
+                log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", String(JSON.stringify(param)))\n\t\t`
+                log_res = `\n\t\tlog.add_log("Send response GET by ${endpoint}", data)\n\t\t`
+            }
+            
 
             body = obj_param + log_req + data_str + filter + log_res + res
 
             temp = `app.get('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {\n\t\tconsole.log("Get request GET on ${endpoint}")\n\t\t${body}\n\t});\n\n\n`
         }else{
-            //console.log(status)
-            log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", "Without parameters or parameters is wrong")\n\t\t`
-            log_res = `\n\t\tlog.add_log("Send response GET by ${endpoint}", ${String(JSON.stringify(data))})\n\t\t`
+            if(this.source == "ui"){
+                log_req = `\n\t\tredis_server.add_log_redis("${this.name_project}", "Get request GET by ${endpoint}", "Without parameters or parameters is wrong")\n\t\t`
+                log_res = `\n\t\tredis_server.add_log_redis("${this.name_project}", "Send response GET by ${endpoint}", ${String(JSON.stringify(data))})\n\t\t`
+            }else{
+                log_req = `\n\t\tlog.add_log("Get request GET by ${endpoint}", "Without parameters or parameters is wrong")\n\t\t`
+                log_res = `\n\t\tlog.add_log("Send response GET by ${endpoint}", ${String(JSON.stringify(data))})\n\t\t`
+            }
+            
             temp = `app.get('${endpoint.replace(new RegExp('{', 'g'), ':').replace(new RegExp('}', 'g'), '')}', (req, res) => {${log_req}\n\t\tconsole.log("Get request GET on ${endpoint}")\n\t\t${log_res}setTimeout(()=>{res.send(${JSON.stringify(data)})},${this.timeout});\n\t});\n\n\n`
         }
         

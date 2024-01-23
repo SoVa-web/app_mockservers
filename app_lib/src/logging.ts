@@ -9,6 +9,15 @@ export class Logging{
         this.path_log = path_log
     }
 
+    add_log_redis(data:string, req_res_data:any):void{
+
+    }
+
+    show_log_redis(name:string){
+
+    }
+
+    //method adding logs
     add_log(data:string, req_res_data:any):void{
         let date = new Date()
         let content:string = ""
@@ -16,10 +25,11 @@ export class Logging{
         content += JSON.stringify(req_res_data)
         content += `time: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} UTC \n\n`
         fs.appendFile(this.path_log, content, (error)=>{
-            console.error(`Запис логів події у файл ${this.path_log}`, error);
+            //console.log(`Recording logs in file ${this.path_log}`, error);
         })
     }
 
+    //method showing logs
     static show_log(name:string):Promise<string>{
         let cont:string = "Error reading"
         let path:string = `../log/${name}.log`

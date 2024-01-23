@@ -23,7 +23,6 @@ class ReadWriter{
 
     parsing_endpoints():Array<object>{
         let buf = this.get_endpoints(this.yaml_content)
-        //console.log(buf)
         return  buf
     }
 
